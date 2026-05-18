@@ -243,6 +243,67 @@ Bu misolda `if` ichida yana `if` ishlatilgan — buni **ichma-ich if** (nested i
 
 ## Mashqlar
 
+**Oson darajali**
+
 1. `raqam` o'zgaruvchisi musbat, manfiy yoki nol ekanligini ekranga chiqaring.
-2. Uchburchak tomonlari berilgan. Tomonlar bir xil bo'lsa `"Tengtomonli"`, ikkitasi bir xil bo'lsa `"Ikki tengtomonli"`, hech biri bir xil bo'lmasa `"Har xil tomonli"` deb chiqaring.
-3. Foydalanuvchi kiritgan sonning juft yoki toq ekanligini aniqlang.
+
+2. Foydalanuvchi kiritgan sonning juft yoki toq ekanligini aniqlang.
+
+3. Ikkita son berilgan (`a` va `b`). Kattaroq sonni ekranga chiqaring. Agar teng bo'lsa, `"Sonlar teng"` deb chiqaring.
+
+4. `harorat` o'zgaruvchisi berilgan. Agar `harorat` 0 dan past bo'lsa `"Sovuq"`, 0 dan 20 gacha bo'lsa `"Iliq"`, 20 dan yuqori bo'lsa `"Issiq"` deb chiqaring.
+
+5. `kun` o'zgaruvchisi (`"dushanba"`, `"seshanba"` va hokazo) berilgan. Agar dam olish kuni bo'lsa (`"shanba"` yoki `"yakshanba"`) `"Dam olish kuni"`, aks holda `"Ish kuni"` deb chiqaring.
+
+6. `ball` o'zgaruvchisi berilgan. 90 va undan yuqori bo'lsa `"A'lo"`, 70–89 bo'lsa `"Yaxshi"`, 50–69 bo'lsa `"Qoniqarli"`, 50 dan past bo'lsa `"Qoniqarsiz"` deb chiqaring.
+
+7. Uchta son berilgan (`a`, `b`, `c`). Ularning eng kattasini toping.
+
+**O'rta darajali**
+
+8. `yil` o'zgaruvchisi berilgan. Agar u kabisa yil bo'lsa `"Kabisa yil"`, aks holda `"Oddiy yil"` deb chiqaring.
+   - Kabisa yil: 4 ga bo'linadi, lekin 100 ga bo'linmaydi; yoki 400 ga bo'linadi.
+
+9. `oy` raqami berilgan (1–12). Qaysi fasl ekanini ekranga chiqaring:
+   - 12, 1, 2 — Qish
+   - 3, 4, 5 — Bahor
+   - 6, 7, 8 — Yoz
+   - 9, 10, 11 — Kuz
+
+10. Foydalanuvchi `login` va `parol` kiritadi. Agar login `"admin"` va parol `"12345"` bo'lsa `"Kirish muvaffaqiyatli"`, aks holda `"Login yoki parol noto'g'ri"` deb chiqaring.
+
+11. `son` o'zgaruvchisi berilgan. Agar son 3 ga ham, 5 ga ham bo'linsa `"FizzBuzz"`, faqat 3 ga bo'linsa `"Fizz"`, faqat 5 ga bo'linsa `"Buzz"`, aks holda sonning o'zini chiqaring.
+
+12. Uchburchak tomonlari berilgan (`a`, `b`, `c`). Tomonlar bir xil bo'lsa `"Tengtomonli"`, ikkitasi bir xil bo'lsa `"Ikki tengtomonli"`, hech biri bir xil bo'lmasa `"Har xil tomonli"` deb chiqaring. Agar tomonlardan biri 0 yoki manfiy bo'lsa `"Noto'g'ri tomonlar"` deb chiqaring.
+
+13. `narx` va `chegirma` (foizda) o'zgaruvchilari berilgan. Agar chegirma 0 dan katta bo'lsa, chegirmali narxni hisoblang va chiqaring. Aks holda `"Chegirma yo'q"` deb chiqaring.
+
+14. Foydalanuvchi `yosh` kiritadi. Agar yosh 0–12 bo'lsa `"Bola"`, 13–17 bo'lsa `"O'smir"`, 18–64 bo'lsa `"Kattalar"`, 65 va undan yuqori bo'lsa `"Keksa"` deb chiqaring. Manfiy yosh uchun `"Noto'g'ri yosh"` deb chiqaring.
+
+**Murakkab darajali**
+
+15. Kalkulyator yarating: `a`, `b` va `amal` (`"+"`, `"-"`, `"*"`, `"/"`) o'zgaruvchilari berilgan. Tegishli amalni bajaring. Bo'lishda `b = 0` bo'lsa, `"Nolga bo'lib bo'lmaydi"` deb chiqaring.
+
+16. `x`, `y` koordinatalari berilgan nuqta qaysi chorakda ekanini aniqlang:
+    - x > 0 va y > 0 — 1-chorak
+    - x < 0 va y > 0 — 2-chorak
+    - x < 0 va y < 0 — 3-chorak
+    - x > 0 va y < 0 — 4-chorak
+    - Aks holda — "O'q ustida"
+
+17. `a`, `b`, `c` koeffitsientlar berilgan (ax² + bx + c = 0). Diskriminantni hisoblang (`D = b² - 4ac`) va:
+    - `D > 0` bo'lsa — ikkita ildiz borligini va ildizlarni chiqaring.
+    - `D === 0` bo'lsa — bitta ildiz borligini chiqaring.
+    - `D < 0` bo'lsa — haqiqiy ildiz yo'qligini chiqaring.
+
+18. Elektr energiyasi hisob-kitob dasturi: `kVt` qiymati berilgan. Agar 100 kVt gacha bo'lsa — har biri 400 so'm, 100–300 oralig'i uchun — 600 so'm, 300 dan yuqori uchun — 900 so'm. Jami to'lovni hisoblang va chiqaring.
+
+19. Uchta talabaning ismi va bali berilgan. Eng yuqori balga ega talabani aniqlang va `"G'olib: [ism]"` ko'rinishida chiqaring. Agar ikkitasi teng eng yuqori balga ega bo'lsa, `"Ikki g'olib bor"` deb chiqaring.
+
+20. BMI (tana massa indeksi) hisoblovchi dastur yarating: `vazn` (kg) va `boy` (metr) berilgan. BMI = vazn / (boy * boy). Natijaga qarab:
+    - BMI < 18.5 — "Ozg'in"
+    - 18.5 – 24.9 — "Normal"
+    - 25 – 29.9 — "Ortiqcha vazn"
+    - 30 va undan yuqori — "Semizlik"
+
+    Agar vazn yoki bo'y 0 yoki manfiy bo'lsa, `"Noto'g'ri ma'lumot"` deb chiqaring.
