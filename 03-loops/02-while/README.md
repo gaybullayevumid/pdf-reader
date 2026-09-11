@@ -1,23 +1,66 @@
 # While sikli (Shartli takrorlanish operatori)
 
-Dasturlashda ba'zan biror amalni necha marta takrorlash kerakligini oldindan bilmaymiz. Masalan: "Foydalanuvchi to'g'ri parol kiritguncha qayta so'ra" yoki "Son 0 dan katta ekan, uni 2 ga bo'lib boraver". 
+Dasturlashda ko'pincha amallar soni oldindan aniq bo'lmaydi. Masalan:
+- Telefoningiz batareyasi quvvati 0% bo'lmaguncha ishlayveradi;
+- Avtomobil benzin tugaguncha harakatlanadi;
+- O'yinchi mag'lub bo'lmaguncha o'yin davom etaveradi;
+- Foydalanuvchi to'g'ri parol kiritmaguncha tizim qayta-qayta parolni so'rayveradi.
 
-Bunday holatlarda **`while`** sikli ishlatiladi. `while` so'zi inglizchadan "modomiki ... ekan", "... davomida" degan ma'nolarni bildiradi.
+Bunday holatlarda takrorlanishlar soni oldindan ma'lum bo'lmagani uchun **`while`** sikli ishlatiladi. `while` so'zi inglizchadan tarjima qilinganda **"modomiki ... ekan"**, **"... davomida"** degan ma'nolarni anglatadi.
 
 ---
 
 ## while siklining tuzilishi
 
-`while` sikli berilgan shart `true` bo'lib turgan vaqtgacha o'z ichidagi kodni qayta-qayta bajaraveradi. Shart `false` bo'lishi bilan sikl to'xtaydi.
+`while` sikli berilgan shart `true` (rost) bo'lib turgan vaqtgacha o'z blokidagi kodni to'xtovsiz bajaraveradi. Shart `false` (yolg'on) bo'lishi bilan sikl o'z ishini yakunlaydi.
 
 **Sintaksis:**
 
 ```js
 while (shart) {
   // Shart rost bo'lsa, bajariladigan kod
-  // Bu yerda shartni o'zgartiruvchi qadam bo'lishi shart!
+  // Shartga ta'sir qiluvchi o'zgarish (qadam) bo'lishi SHART!
 }
 ```
+
+---
+
+## Qadamma-qadam ishlash sxemasi
+
+Siklning ishlash mantiqini quyidagi sxema orqali tasavvur qilish mumkin:
+
+```text
+[Boshlanish] ───► [Shart tekshiriladi]
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+         ROST (true)          YOLG'ON (false)
+              │                     │
+              ▼                     ▼
+        [Sikl tanasi]        [Sikl tugaydi!]
+              │
+              ▼
+    [O'zgaruvchi yangilanadi]
+              │
+              └──────────► (Yana shartga qaytadi)
+```
+
+1. Avval qavs ichidagi `shart` tekshiriladi.
+2. Agar shart `true` bo'lsa — jingalak qavslar `{}` ichidagi kod bajariladi.
+3. Kod bajarilib bo'lgach, jarayon yana boshiga qaytib, shartni qayta tekshiradi.
+4. Agar shart `false` bo'lsa — sikl to'xtaydi va dastur undan keyingi qatorlarga o'tadi.
+
+---
+
+## while siklining 3 ta oltin ustuni
+
+Har qanday sog'lom `while` sikli 3 ta muhim qismdan iborat bo'lishi kerak:
+
+1. **Boshlang'ich holat:** Sikldan tashqarida hisoblagich yoki holat o'zgaruvchisi e'lon qilinadi (masalan: `let i = 1;`).
+2. **Shart:** Sikl qachongacha ishlashini tekshiruvchi ifoda (masalan: `i <= 5`).
+3. **O'zgarish (qadam):** Sikl ichida har safar shartdagi o'zgaruvchini yangilab boruvchi amal (masalan: `i++;`).
+
+Agar shu uchtadan bittasi tushib qolsa, sikl yo umuman ishlamaydi, yoki to'xtovsiz ishlab qotib qoladi.
 
 ---
 
@@ -26,10 +69,12 @@ while (shart) {
 ```js
 let i = 1; // 1. Boshlang'ich qiymat
 
-while (i <= 5) { // 2. Shart
+while (i <= 5) { // 2. Shart tekshiruvi
   console.log("Qadam: " + i);
-  i++; // 3. Qadam (qiymatni oshirish)
+  i++; // 3. Qadam (qiymatni 1 taga oshirish)
 }
+
+console.log("Sikl yakunlandi!");
 ```
 
 **Natija:**
@@ -40,45 +85,27 @@ Qadam: 2
 Qadam: 3
 Qadam: 4
 Qadam: 5
+Sikl yakunlandi!
 ```
 
-### Kod qadamma-qadam qanday ishlaydi?
+### Kod qadamlari tahlili:
 
-1. `let i = 1` o'zgaruvchisi sikldan tashqarida e'lon qilindi.
-2. `while (i <= 5)` tekshiriladi: `1 <= 5` rost (`true`).
-3. Sikl ichiga kiradi: `Qadam: 1` ekranga chiqadi.
-4. `i++` ishlab, `i` qiymati `2` ga aylanadi.
-5. Yana shart tekshiriladi: `2 <= 5` rost. Kod yana ishlaydi.
-6. Bu jarayon `i = 6` bo'lgunga qadar davom etadi.
-7. `6 <= 5` yolg'on (`false`) bo'lgani sababli sikl to'xtaydi.
-
----
-
-## for va while sikllari farqi
-
-Aslida deyarli har qanday `for` siklini `while` orqali, va aksincha har qanday `while` siklini `for` orqali yozish mumkin. Lekin ularning maqsadi turlicha:
-
-```js
-// FOR bilan: Necha marta takrorlanishi aniq bo'lganda (masalan, roppa-rosa 5 marta)
-for (let i = 1; i <= 5; i++) {
-  console.log(i);
-}
-
-// WHILE bilan: Qandaydir shart bajarilguncha davom etganda
-let son = 100;
-while (son > 1) {
-  son = son / 2;
-  console.log(son);
-}
-```
+| Qadam | `i` ning qiymati | `i <= 5` sharti | Ekranga chiqadi | Yangi `i` (`i++`) |
+|-------|------------------|-----------------|-----------------|-------------------|
+| 1-aylana | 1 | `1 <= 5` (true) | `Qadam: 1` | 2 |
+| 2-aylana | 2 | `2 <= 5` (true) | `Qadam: 2` | 3 |
+| 3-aylana | 3 | `3 <= 5` (true) | `Qadam: 3` | 4 |
+| 4-aylana | 4 | `4 <= 5` (true) | `Qadam: 4` | 5 |
+| 5-aylana | 5 | `5 <= 5` (true) | `Qadam: 5` | 6 |
+| 6-aylana | 6 | `6 <= 5` (false) | *(Sikldan chiqadi)* | — |
 
 ---
 
 ## Eng xavfli xato: Cheksiz sikl (Infinite Loop)
 
-`while` siklida eng ko'p uchraydigan xato — hisoblagichni yangilashni (`i++` ni) unutib qoldirishdir.
+`while` bilan ishlashda yangi boshlovchilar yo'l qo'yadigan eng katta xato — bu hisoblagichni oshirishni (`i++` ni) unutib qoldirishdir.
 
-**Xato misol (buni sinab ko'rmang!):**
+**Xato kod (buni sinab ko'rmang!):**
 
 ```js
 let i = 1;
@@ -89,35 +116,104 @@ while (i <= 5) {
 }
 ```
 
-Bu holatda `i` doimo `1` bo'lib qoladi, `1 <= 5` sharti hech qachon `false` bo'lmaydi va dastur to'xtamasdan ishlab, kompyuterni qotirib qo'yishi mumkin.
+Bu holatda `i` doim `1` ga teng bo'lib qoladi, `1 <= 5` sharti hech qachon `false` bo'lmaydi va kompyuter cheksiz ravishda `1` chiqaraverib, brauzer yoki dasturni qotirib qo'yadi.
 
-> Har doim `while` sikli ichida shartni `false` holatga keltiruvchi o'zgarish borligini tekshiring!
+> **Agar cheksiz siklga tushib qolsangiz:** Brauzer sahifasini darhol yoping yoki terminalda `Ctrl + C` tugmasini bosing.
 
 ---
 
-## Amaliy misol 1: Sonning raqamlari yig'indisini topish
+## Shart boshidanoq yolg'on (false) bo'lsa-chi?
 
-Har qanday butun son berilgan. Uning raqamlari yig'indisini `while` sikli yordamida topamiz. Har safar sonning oxirgi raqamini olib, sonni 10 ga bo'lib qisqartirib boramiz:
+Agar shart eng birinchi tekshiruvdayoq `false` bo'lsa, `while` siklining ichidagi kod **biror marta ham bajarilmaydi**:
 
 ```js
-let son = 456;
+let yosh = 15;
+
+while (yosh >= 18) {
+  console.log("Siz voyaga yetgansiz."); // Bu qatorga dastur umuman kirmaydi!
+  yosh++;
+}
+
+console.log("Dastur davom etmoqda...");
+```
+
+---
+
+## Bayroqcha (Boolean Flag) yordamida siklni boshqarish
+
+Dasturlashda ko'pincha holatni ifodalovchi `true` yoki `false` qiymatli o'zgaruvchilar (ularni *bayroqcha* yoki *flag* deyiladi) orqali `while` sikli boshqariladi:
+
+```js
+let oynaOchiq = true;
+let xonaHarorati = 25;
+
+while (oynaOchiq) {
+  console.log("Harorat: " + xonaHarorati + "°C. Oyna ochiq.");
+  xonaHarorati--; // Xona sovib bormoqda
+
+  // Harorat 20 darajaga tushganda oynani yopamiz
+  if (xonaHarorati <= 20) {
+    oynaOchiq = false; // Sikl shartini to'xtatuvchi bayroq
+    console.log("Xona yetarlicha sovidi. Oyna yopildi!");
+  }
+}
+```
+
+**Natija:**
+```
+Harorat: 25°C. Oyna ochiq.
+Harorat: 24°C. Oyna ochiq.
+Harorat: 23°C. Oyna ochiq.
+Harorat: 22°C. Oyna ochiq.
+Harorat: 21°C. Oyna ochiq.
+Xona yetarlicha sovidi. Oyna yopildi!
+```
+
+---
+
+## for va while sikllarining farqi
+
+Har qanday `for` siklini `while` ga, har qanday `while` siklini esa `for` ga aylantirish mumkin. Lekin qaysi birini qachon tanlash qulayroq?
+
+```js
+// 1. FOR: Qadamlar soni oldindan ma'lum bo'lganda (10 marta, 100 marta)
+for (let i = 1; i <= 5; i++) {
+  console.log(i);
+}
+
+// 2. WHILE: Takrorlanishlar soni shartga bog'liq bo'lganda
+let batareya = 100;
+while (batareya > 0) {
+  batareya -= 20;
+  console.log("Qolgan zaryad: " + batareya + "%");
+}
+```
+
+---
+
+## Amaliy misol 1: Sonning raqamlari yig'indisini hisoblash
+
+Har qanday butun sonning (masalan: `385`) raqamlari yig'indisini topish. Buning uchun `while` siklida sonni oxirgi raqamini `% 10` orqali ajratib olamiz va `Math.floor(son / 10)` orqali oxirgi raqamni qirqib tashlaymiz:
+
+```js
+let son = 385;
 let yigindi = 0;
 
 while (son > 0) {
-  let oxirgiRaqam = son % 10; // Oxirgi raqamni olish (456 % 10 = 6)
-  yigindi += oxirgiRaqam;      // Yig'indiga qo'shish
-  son = Math.floor(son / 10);  // Oxirgi raqamni o'chirib tashlash (456 / 10 = 45)
+  let oxirgiRaqam = son % 10; // 385 % 10 = 5
+  yigindi += oxirgiRaqam;      // yigindi = 0 + 5 = 5
+  son = Math.floor(son / 10);  // 385 / 10 = 38 (butun qismi)
 }
 
 console.log("Raqamlar yig'indisi: " + yigindi);
-// Natija: 15 (chunki 4 + 5 + 6 = 15)
+// Natija: 16 (chunki 5 + 8 + 3 = 16)
 ```
 
 ---
 
 ## Amaliy misol 2: Sonni teskari o'girish (Reverse number)
 
-Masalan, `1234` sonini `4321` holatiga keltirish:
+Sonni orqadan oldinga qarab yozish (masalan: `1234` → `4321`):
 
 ```js
 let son = 1234;
@@ -125,25 +221,63 @@ let teskari = 0;
 
 while (son > 0) {
   let qoldiq = son % 10;
-  teskari = teskari * 10 + qoldiq;
+  teskari = teskari * 10 + qoldiq; // Raqamni yangi o'ringa qo'shish
   son = Math.floor(son / 10);
 }
 
-console.log("Teskari son: " + teskari);
-// Natija: 4321
+console.log("Teskari son: " + teskari); // 4321
 ```
 
 ---
 
-## Amaliy misol 3: 2 ning darajalarini topish
+## Amaliy misol 3: Bank depoziti o'sishini hisoblash
 
-Berilgan sondan kichik bo'lgan barcha 2 ning darajalarini chiqarish:
+Foydalanuvchi hisobida 1 000 000 so'm bor. Har oyda pulga 5% foyda qo'shiladi. Pul qachon 2 000 000 so'mdan oshadi?
 
 ```js
-let chegara = 100;
+let balans = 1000000;
+let maqsad = 2000000;
+let oy = 0;
+
+while (balans < maqsad) {
+  balans += balans * 0.05; // 5% ustama qo'shildi
+  oy++;
+}
+
+console.log(oy + " oydan so'ng balans: " + Math.round(balans) + " so'm bo'ladi.");
+// Natija: 15 oydan so'ng balans: 2078928 so'm bo'ladi.
+```
+
+---
+
+## Amaliy misol 4: Bo'lish amalisiz butun qism va qoldiqni topish
+
+Matematikada bo'lish amali aslida ketma-ket ayirish demakdir ($17 / 5$ — 17 dan necha marta 5 ni ayira olamiz?):
+
+```js
+let bolinuvchi = 17;
+let boluvchi = 5;
+let butunQism = 0;
+
+while (bolinuvchi >= boluvchi) {
+  bolinuvchi -= boluvchi;
+  butunQism++;
+}
+
+console.log("Butun qismi: " + butunQism); // 3
+console.log("Qoldiq: " + bolinuvchi);     // 2
+```
+
+---
+
+## Amaliy misol 5: 2 ning darajalarini chiqarish
+
+100 dan kichik bo'lgan barcha ikkining darajalarini chiqarish:
+
+```js
 let daraja = 1;
 
-while (daraja <= chegara) {
+while (daraja < 100) {
   console.log(daraja);
   daraja *= 2; // 1, 2, 4, 8, 16, 32, 64
 }
@@ -155,10 +289,10 @@ while (daraja <= chegara) {
 
 | Xususiyat | `for` sikli | `while` sikli |
 |-----------|-------------|---------------|
-| Takrorlanish soni | Oldindan aniq ma'lum | Oldindan noma'lum bo'lishi mumkin |
-| Boshlang'ich qiymat | Sikl sarlavhasida e'lon qilinadi | Sikldan tashqarida e'lon qilinadi |
-| Qadam | Sikl sarlavhasida beriladi | Sikl tanasi ichida yoziladi |
-| Tavsiya etilgan holat | Sanash, massiv elementlarini aylanib chiqish | Holat yoki shartga asoslangan jarayonlar |
+| Takrorlanish soni | Oldindan aniq ma'lum bo'lganda | Noma'lum bo'lib, shartga bog'liq bo'lganda |
+| Boshlang'ich qiymat | Sikl ichida e'lon qilinadi (`let i = 0`) | Sikldan oldin tashqarida e'lon qilinadi |
+| Qadam (yangilanish) | Sikl boshida belgilanadi (`i++`) | Sikl tanasi ichida yoziladi |
+| Cheksiz sikl xavfi | Kamroq (sintaksis o'zi talab qiladi) | Yuqoriroq (`i++` ni unutib qo'yish mumkin) |
 
 ---
 
@@ -168,7 +302,7 @@ while (daraja <= chegara) {
 
 1. `while` sikli yordamida 1 dan 15 gacha bo'lgan sonlarni ekranga chiqaring.
 
-2. `while` sikli yordamida 20 dan 1 gacha sonlarni teskari tartibda chiqaring.
+2. `while` yordamida 20 dan 1 gacha sonlarni teskari tartibda chiqaring.
 
 3. 1 dan 30 gacha bo'lgan barcha juft sonlarni `while` yordamida chiqaring.
 
@@ -198,14 +332,14 @@ while (daraja <= chegara) {
 
 **Murakkab darajali**
 
-15. **Palindrom son:** Berilgan son teskarisiga o'qilganda ham o'ziga teng ekanligini tekshiring (masalan: `1221` yoki `12321` — palindrom).
+15. **Palindrom son:** Berilgan son teskarisiga o'qilganda ham o'ziga teng ekanligini `while` orqali tekshiring (masalan: `1221` yoki `12321` — palindrom).
 
 16. **EKUB (Eng katta umumiy bo'luvchi) - Evklid algoritmi:** Ikkita son (`a` va `b`) ning EKUBini `while` sikli yordamida toping.
 
 17. **EKUK (Eng kichik umumiy karrali):** Ikkita sonning EKUKini topuvchi dastur tuzing.
 
-18. Berilgan sonni ikkilik (binary) sanoq sistemasiga o'tkazuvchi dastur yozing (masalan: `13` → `"1101"`).
+18. Berilgan butun sonni ikkilik (binary) sanoq sistemasiga o'tkazuvchi dastur yozing (masalan: `13` → `"1101"`).
 
 19. **Kollats gipotezasi (3n + 1):** Berilgan `n` soni juft bo'lsa `n / 2`, toq bo'lsa `3n + 1` qilinadi. Bu jarayon `n === 1` bo'lguncha davom etadi. Necha qadamda 1 ga yetishini va barcha oraliq sonlarni chiqaring.
 
-20. Bankomat simulyatsiyasi: Berilgan pul miqdorini (masalan: `380 000` so'm) eng kam kupyuralar soni bilan chiqarish kerak (100 000, 50 000, 10 000 so'mliklar). `while` yordamida har bir kupyuradan nechtadan berilishini hisoblang.
+20. **Bankomat simulyatsiyasi:** Berilgan pul miqdorini (masalan: `380 000` so'm) eng kam kupyuralar soni bilan chiqarish kerak (100 000, 50 000, 10 000 so'mliklar). `while` yordamida har bir kupyuradan nechtadan berilishini hisoblang.
