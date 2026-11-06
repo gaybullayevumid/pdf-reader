@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=PDF Reader
+GenericName=PDF Viewer
+Comment=Fast, simple PDF reader
+Comment[uz]=Tez va sodda PDF o'qish dasturi
+Comment[ru]=Быстрая и простая программа для чтения PDF
+Exec=pdf-reader %f
+Icon=pdf-reader
+Terminal=false
+Categories=Office;Viewer;GTK;
+MimeType=application/pdf;
+StartupWMClass=pdf-reader
+Keywords=PDF;document;reader;viewer;

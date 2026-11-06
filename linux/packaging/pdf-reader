@@ -1,0 +1,2 @@
+#!/bin/sh
+exec env PYTHONPATH=/usr/lib/pdf-reader${PYTHONPATH:+:$PYTHONPATH} python3 -m pdf_reader "$@"

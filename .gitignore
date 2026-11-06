@@ -82,3 +82,7 @@ _ReSharper*/
 # Generated files
 Generated\ Files/
 *_wpftmp.csproj
+
+# Linux package output
+linux/dist/
+__pycache__/

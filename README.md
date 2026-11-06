@@ -29,6 +29,18 @@
 
 Not available yet: text search and printing.
 
+## Linux
+
+A Debian package (GTK 3 + Poppler) is attached to each release:
+
+```bash
+sudo apt install ./pdf-reader_1.2.0_all.deb
+```
+
+It supports continuous scrolling, zoom, password-protected PDFs, the recent/favorites library, the three languages,
+full screen (`F11`), themes and window state. See [docs/PACKAGING-LINUX.md](docs/PACKAGING-LINUX.md).
+It does not update itself; install the newer `.deb` to upgrade.
+
 ## Settings
 
 Open **Settings** from the sidebar. Changes apply immediately and are saved automatically.
