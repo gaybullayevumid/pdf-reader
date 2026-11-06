@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PaperFlow (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PaperFlow (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

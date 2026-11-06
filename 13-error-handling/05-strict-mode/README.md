@@ -1,2 +1,0 @@
-# 05 Strict Mode
-
