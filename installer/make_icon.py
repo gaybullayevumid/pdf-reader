@@ -1,9 +1,9 @@
-"""Draws the PaperFlow app icon. Writes Assets/icon-1024.png and Assets/AppIcon.ico (requires Pillow)."""
+"""Draws the PDF Reader app icon. Writes Assets/icon-1024.png and Assets/AppIcon.ico (requires Pillow)."""
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
-OUT = Path(__file__).resolve().parent.parent / "PaperFlow" / "Assets"
+OUT = Path(__file__).resolve().parent.parent / "Assets"
 S = 2048  # draw at 2x, downsample to 1024
 k = S / 1024
 

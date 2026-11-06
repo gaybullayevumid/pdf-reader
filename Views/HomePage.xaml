@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="PdfReader.Views.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:components="using:PdfReader.Views.Components">
+
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="960"
+            Padding="36,24,36,36"
+            HorizontalAlignment="Stretch"
+            Spacing="28">
+
+            <StackPanel Spacing="4">
+                <TextBlock Style="{StaticResource TitleLargeTextBlockStyle}" Text="Welcome to PDF Reader" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Open a PDF to start reading, or pick up where you left off." />
+            </StackPanel>
+
+            <!-- Quick access / drop target -->
+            <Border
+                Padding="28"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+                <Grid ColumnSpacing="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon
+                        FontSize="40"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Glyph="&#xE8E5;" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Open a PDF" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Drag and drop PDF files anywhere in this window, or browse for them."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Command="{x:Bind ViewModel.PickCommand}"
+                        Content="Browse files"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </Border>
+
+            <StackPanel Spacing="12">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Recent" />
+
+                <components:DocumentList
+                    x:Name="Recent"
+                    FavoriteToggled="OnFavoriteToggled"
+                    OpenRequested="OnOpenRequested"
+                    RemoveRequested="OnRemoveRequested" />
+
+                <!-- Empty state -->
+                <StackPanel
+                    Padding="0,32"
+                    HorizontalAlignment="Center"
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                    <FontIcon
+                        FontSize="48"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Glyph="&#xE8A5;" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="{x:Bind ViewModel.EmptyTitle, Mode=OneWay}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.EmptyDescription, Mode=OneWay}" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
