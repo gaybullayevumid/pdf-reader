@@ -11,6 +11,27 @@
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/viewer-light.png" alt="Reading a PDF in the light theme" width="820" />
+</p>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/viewer-dark.png" alt="Dark theme" /><br /><sub><b>Dark theme</b></sub></td>
+    <td align="center"><img src="docs/images/home-light.png" alt="Home and recent files" /><br /><sub><b>Home and recent files</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/settings-light.png" alt="Settings" /><br /><sub><b>Settings</b></sub></td>
+    <td align="center"><img src="docs/images/settings-ru-dark.png" alt="Settings in Russian, dark theme" /><br /><sub><b>Instant language switch (Русский)</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/home-uz.png" alt="Home in Uzbek" /><br /><sub><b>O‘zbekcha</b></sub></td>
+    <td align="center"><img src="docs/images/linux-viewer.png" alt="Linux version (GTK)" /><br /><sub><b>Linux version (GTK)</b></sub></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Open PDFs your way**: file picker (`Ctrl+O`), drag and drop, double-click, or *Open with → PDF Reader*.
