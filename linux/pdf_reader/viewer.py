@@ -57,7 +57,7 @@ class PdfView(Gtk.Box):
 
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         left.pack_start(self.area, True, True, 0)
-        self.hbar = Gtk.Scrollbar(orientation=Gtk.Orientation.HORIZONTAL, adjustment=self.hadj)
+        self.hbar = Gtk.Scrollbar(orientation=Gtk.Orientation.HORIZONTAL, adjustment=self.hadj, no_show_all=True)
         left.pack_start(self.hbar, False, False, 0)
         self.pack_start(left, True, True, 0)
         self.vbar = Gtk.Scrollbar(orientation=Gtk.Orientation.VERTICAL, adjustment=self.vadj)
