@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using PdfReader.Database;
+using PdfReader.Localization;
 using PdfReader.Services;
 using PdfReader.ViewModels;
 using Serilog;
@@ -20,6 +21,7 @@ public partial class App : Application
         InitializeComponent();
         ConfigureLogging();
         Services = BuildServices();
+        Loc.Service = Services.GetRequiredService<ILocalizationService>();
         UnhandledException += OnUnhandledException;
     }
 
@@ -32,6 +34,11 @@ public partial class App : Application
         ((WindowProvider)Services.GetRequiredService<IWindowProvider>()).Set(window);
         Services.GetRequiredService<IThemeService>().Attach(window);
         window.Activate();
+        Services.GetRequiredService<IWindowStateService>().RestoreMode();
+
+        // Quietly look for a newer release (the main window shows a bar if there is one).
+        if (Services.GetRequiredService<ISettingsService>().AutoCheckUpdates)
+            _ = Services.GetRequiredService<IUpdateService>().CheckAsync();
 
         // Launched with a file (double-click / "Open with" / command line).
         var launchFiles = Environment.GetCommandLineArgs().Skip(1).Select(ResolvePath).ToList();
@@ -53,12 +60,15 @@ public partial class App : Application
 
         services.AddSingleton<AppDatabase>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<ILocalizationService, LocalizationService>();
+        services.AddSingleton<IWindowStateService, WindowStateService>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IWindowProvider, WindowProvider>();
         services.AddSingleton<IFileService, FileService>();
         services.AddSingleton<IRecentFilesService, RecentFilesService>();
         services.AddSingleton<IDocumentOpener, DocumentOpener>();
+        services.AddSingleton<IUpdateService, UpdateService>();
 
         services.AddSingleton<MainViewModel>();
         services.AddTransient<LibraryViewModel>();

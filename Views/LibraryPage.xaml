@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:components="using:PdfReader.Views.Components">
 
-    <Grid MaxWidth="960" Padding="36,24,36,0" RowSpacing="16" HorizontalAlignment="Stretch">
+    <Grid MaxWidth="1400" Padding="28,12,28,0" RowSpacing="12" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -37,7 +37,9 @@
             <TextBlock
                 HorizontalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.EmptyDescription, Mode=OneWay}" />
+                Text="{x:Bind ViewModel.EmptyDescription, Mode=OneWay}"
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
         </StackPanel>
     </Grid>
 </Page>

@@ -18,11 +18,14 @@ $iscc = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $iscc) { throw 'Inno Setup 6 not found (https://jrsoftware.org/isdl.php)' }
 
-& $iscc "$PSScriptRoot\PdfReader.iss"
+$version = ([xml](Get-Content "$root\PdfReader.csproj")).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+if (-not $version) { throw 'No <Version> in PdfReader.csproj' }
+Write-Host "Version: $version"
+
+& $iscc "/DAppVersion=$version" "$PSScriptRoot\PdfReader.iss"
 if ($LASTEXITCODE -ne 0) { throw 'ISCC failed' }
 
 if ($Portable) {
-  $version = (Select-String -Path "$PSScriptRoot\PdfReader.iss" -Pattern '#define AppVersion "(.+)"').Matches[0].Groups[1].Value
   $zip = Join-Path $output "PDFReader-$version-win-x64-portable.zip"
   if (Test-Path $zip) { Remove-Item $zip }
   Compress-Archive -Path "$publish\*" -DestinationPath $zip

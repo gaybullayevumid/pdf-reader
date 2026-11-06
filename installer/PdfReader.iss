@@ -1,6 +1,8 @@
 ; Build with build.ps1 (publishes the app to installer\publish, then runs ISCC.exe on this file).
 #define AppName "PDF Reader"
-#define AppVersion "1.1.0"
+#ifndef AppVersion
+  #define AppVersion "1.2.0" ; normally passed by build.ps1 from PdfReader.csproj
+#endif
 #define AppExe "PdfReader.exe"
 
 [Setup]
@@ -44,3 +46,11 @@ Root: HKA; Subkey: "Software\Classes\PdfReader.pdf\shell\open\command"; ValueTyp
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: LaunchAfterSilentInstall
+
+[Code]
+// The in-app updater runs this installer silently with /LAUNCH=1 so the app reopens after updating.
+function LaunchAfterSilentInstall: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:launch|0}') = '1');
+end;

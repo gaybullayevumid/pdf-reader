@@ -2,7 +2,8 @@
 <Page
     x:Class="PdfReader.Views.ViewerPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:PdfReader.Localization">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -21,8 +22,9 @@
             <Button
                 Background="Transparent"
                 BorderThickness="0"
-                Click="OnBack"
-                ToolTipService.ToolTip="Back">
+                loc:Loc.AutomationName="viewer.back"
+                loc:Loc.ToolTip="viewer.back"
+                Click="OnBack">
                 <FontIcon FontSize="16" Glyph="&#xE72B;" />
             </Button>
 
@@ -44,8 +46,9 @@
                     VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     Minimum="1"
+                    loc:Loc.AutomationName="viewer.gotoPage"
+                    loc:Loc.ToolTip="viewer.gotoPage"
                     SpinButtonPlacementMode="Hidden"
-                    ToolTipService.ToolTip="Go to page"
                     ValueChanged="OnPageBoxChanged" />
                 <TextBlock
                     x:Name="PageCountText"
@@ -55,8 +58,9 @@
                 <Button
                     Background="Transparent"
                     BorderThickness="0"
-                    Click="OnZoomOut"
-                    ToolTipService.ToolTip="Zoom out (Ctrl+-)">
+                    loc:Loc.AutomationName="viewer.zoomOut"
+                    loc:Loc.ToolTip="viewer.zoomOut"
+                    Click="OnZoomOut">
                     <FontIcon FontSize="16" Glyph="&#xE71F;" />
                 </Button>
                 <DropDownButton
@@ -67,8 +71,8 @@
                     Content="100%">
                     <DropDownButton.Flyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Click="OnFitWidth" Text="Fit width (Ctrl+0)" />
-                            <MenuFlyoutItem Click="OnFitPage" Text="Fit page" />
+                            <MenuFlyoutItem Click="OnFitWidth" loc:Loc.Text="viewer.fitWidth" />
+                            <MenuFlyoutItem Click="OnFitPage" loc:Loc.Text="viewer.fitPage" />
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Click="OnZoomPreset" Tag="0.5" Text="50%" />
                             <MenuFlyoutItem Click="OnZoomPreset" Tag="0.75" Text="75%" />
@@ -82,9 +86,27 @@
                 <Button
                     Background="Transparent"
                     BorderThickness="0"
-                    Click="OnZoomIn"
-                    ToolTipService.ToolTip="Zoom in (Ctrl++)">
+                    loc:Loc.AutomationName="viewer.zoomIn"
+                    loc:Loc.ToolTip="viewer.zoomIn"
+                    Click="OnZoomIn">
                     <FontIcon FontSize="16" Glyph="&#xE8A3;" />
+                </Button>
+                <AppBarSeparator />
+                <Button
+                    Background="Transparent"
+                    BorderThickness="0"
+                    loc:Loc.AutomationName="viewer.open"
+                    loc:Loc.ToolTip="viewer.open"
+                    Click="OnOpenPdf">
+                    <FontIcon FontSize="16" Glyph="&#xE8E5;" />
+                </Button>
+                <Button
+                    Background="Transparent"
+                    BorderThickness="0"
+                    loc:Loc.AutomationName="viewer.fullscreen"
+                    loc:Loc.ToolTip="viewer.fullscreen"
+                    Click="OnToggleFullScreen">
+                    <FontIcon FontSize="16" Glyph="&#xE740;" />
                 </Button>
             </StackPanel>
         </Grid>

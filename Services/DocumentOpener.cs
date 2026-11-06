@@ -19,6 +19,7 @@ public sealed class DocumentOpener(
     IFileService files,
     IRecentFilesService recent,
     INavigationService navigation,
+    ILocalizationService loc,
     ILogger<DocumentOpener> logger) : IDocumentOpener
 {
     public event EventHandler? LibraryChanged;
@@ -33,7 +34,7 @@ public sealed class DocumentOpener(
         catch (Exception ex)
         {
             logger.LogError(ex, "File picker failed");
-            Notification?.Invoke(this, "Could not show the file picker.");
+            Notification?.Invoke(this, loc.Get("opener.pickerFailed"));
         }
     }
 
@@ -43,7 +44,7 @@ public sealed class DocumentOpener(
         var pdfs = files.FilterPdfPaths(candidates);
         if (candidates.Count > 0 && pdfs.Count == 0)
         {
-            Notification?.Invoke(this, "Only existing PDF files can be opened.");
+            Notification?.Invoke(this, loc.Get("opener.onlyPdf"));
             return;
         }
 
@@ -58,7 +59,7 @@ public sealed class DocumentOpener(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to register {Path}", path);
-                Notification?.Invoke(this, $"Could not add {Path.GetFileName(path)} to your library.");
+                Notification?.Invoke(this, loc.Format("opener.addFailed", Path.GetFileName(path)));
             }
         }
 

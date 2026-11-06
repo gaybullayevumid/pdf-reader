@@ -3,20 +3,22 @@
     x:Class="PdfReader.Views.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:components="using:PdfReader.Views.Components">
+    xmlns:components="using:PdfReader.Views.Components"
+    xmlns:loc="using:PdfReader.Localization">
 
     <ScrollViewer>
         <StackPanel
-            MaxWidth="960"
-            Padding="36,24,36,36"
+            MaxWidth="1400"
+            Padding="28,12,28,32"
             HorizontalAlignment="Stretch"
-            Spacing="28">
+            Spacing="24">
 
             <StackPanel Spacing="4">
-                <TextBlock Style="{StaticResource TitleLargeTextBlockStyle}" Text="Welcome to PDF Reader" />
+                <TextBlock loc:Loc.Text="home.welcome" Style="{StaticResource TitleLargeTextBlockStyle}" />
                 <TextBlock
+                    loc:Loc.Text="home.subtitle"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Open a PDF to start reading, or pick up where you left off." />
+                    TextWrapping="Wrap" />
             </StackPanel>
 
             <!-- Quick access / drop target -->
@@ -37,23 +39,23 @@
                         Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                         Glyph="&#xE8E5;" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Open a PDF" />
+                        <TextBlock loc:Loc.Text="home.open.title" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock
+                            loc:Loc.Text="home.open.desc"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Drag and drop PDF files anywhere in this window, or browse for them."
                             TextWrapping="Wrap" />
                     </StackPanel>
                     <Button
                         Grid.Column="2"
                         VerticalAlignment="Center"
+                        loc:Loc.Content="home.browse"
                         Command="{x:Bind ViewModel.PickCommand}"
-                        Content="Browse files"
                         Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
             </Border>
 
             <StackPanel Spacing="12">
-                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Recent" />
+                <TextBlock loc:Loc.Text="home.recent" Style="{StaticResource SubtitleTextBlockStyle}" />
 
                 <components:DocumentList
                     x:Name="Recent"
@@ -78,7 +80,9 @@
                     <TextBlock
                         HorizontalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind ViewModel.EmptyDescription, Mode=OneWay}" />
+                        Text="{x:Bind ViewModel.EmptyDescription, Mode=OneWay}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>

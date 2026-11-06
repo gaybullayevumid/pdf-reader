@@ -19,10 +19,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>PdfReader</AssemblyName>
+    <!-- Single source of truth for the app version; installer/build.ps1 passes it to Inno Setup. -->
+    <Version>1.2.0</Version>
     <Product>PDF Reader</Product>
     <Description>A fast, simple PDF reader for Windows 11.</Description>
     <!-- Keep non-app folders out of the project's default globs. -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);installer/**;docs/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);installer/**;docs/**;tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +37,11 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI strings, one JSON per language (see Localization/). Loaded at runtime by StringCatalog. -->
+    <EmbeddedResource Include="Localization\Strings\*.json" LogicalName="Strings.%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

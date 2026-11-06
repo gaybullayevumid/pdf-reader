@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using PdfReader.Localization;
 using PdfReader.Services;
 using PdfReader.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
@@ -11,6 +14,7 @@ namespace PdfReader;
 public sealed partial class MainWindow : Window
 {
     private readonly IDocumentOpener _opener = App.Services.GetRequiredService<IDocumentOpener>();
+    private readonly IWindowStateService _windowState = App.Services.GetRequiredService<IWindowStateService>();
 
     public MainViewModel ViewModel { get; } = App.Services.GetRequiredService<MainViewModel>();
 
@@ -21,15 +25,41 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.SetIcon("Assets/AppIcon.ico");
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 820));
+
+        // The NavigationView's built-in Settings entry only exists once its template is applied.
+        NavView.Loaded += (_, _) => LocalizeSettingsItem();
+
+        _windowState.Attach(this);
+        _windowState.RestoreBounds();
 
         App.Services.GetRequiredService<INavigationService>().Attach(ContentFrame);
         ContentFrame.Navigated += OnFrameNavigated;
         ViewModel.Navigate("home");
     }
 
+    /// <summary>The built-in Settings entry has its own OS-language caption and accessible name; use ours.</summary>
+    private void LocalizeSettingsItem()
+    {
+        if (NavView.SettingsItem is not NavigationViewItem item) return;
+        Loc.SetContent(item, "nav.settings");
+        Loc.SetAutomationName(item, "nav.settings");
+    }
+
     private void OnPaneToggleRequested(TitleBar sender, object args) =>
         NavView.IsPaneOpen = !NavView.IsPaneOpen;
+
+    private void OnToggleFullScreen(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _windowState.ToggleFullScreen();
+        args.Handled = true;
+    }
+
+    private void OnEscape(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (!_windowState.IsFullScreen) return;
+        _windowState.SetFullScreen(false);
+        args.Handled = true;
+    }
 
     private bool _syncingSelection;
 
@@ -46,6 +76,9 @@ public sealed partial class MainWindow : Window
         _syncingSelection = true;
         try { NavView.SelectedItem = target; }
         finally { _syncingSelection = false; }
+
+        // The viewer brings its own toolbar, so the app toolbar would only waste a row of space.
+        Toolbar.Visibility = e.SourcePageType == typeof(Views.ViewerPage) ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private NavigationViewItem? FindMenuItem(string? tag) =>
@@ -66,7 +99,7 @@ public sealed partial class MainWindow : Window
         if (e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             e.AcceptedOperation = DataPackageOperation.Copy;
-            e.DragUIOverride.Caption = "Open PDF";
+            e.DragUIOverride.Caption = Loc.Get("toolbar.open");
         }
     }
 

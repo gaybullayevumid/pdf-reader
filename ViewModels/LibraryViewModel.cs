@@ -11,6 +11,7 @@ namespace PdfReader.ViewModels;
 public sealed partial class LibraryViewModel(
     IRecentFilesService recent,
     IDocumentOpener opener,
+    ILocalizationService loc,
     ILogger<LibraryViewModel> logger) : ObservableObject
 {
     private LibraryFilter _filter = LibraryFilter.Recent;
@@ -38,20 +39,37 @@ public sealed partial class LibraryViewModel(
     {
         _filter = filter;
         _limit = limit;
-        (Title, EmptyTitle, EmptyDescription) = filter switch
-        {
-            LibraryFilter.Recent => ("Recent files", "No recent files", "PDFs you open will show up here."),
-            LibraryFilter.All => ("All PDFs", "No PDFs yet", "Open a PDF or drop one into the window to build your library."),
-            LibraryFilter.Favorites => ("Favorites", "No favorites yet", "Select the star on any PDF to keep it here."),
-            _ => ("Bookmarks", "No bookmarks yet", "Documents with bookmarks will be listed here."),
-        };
+        UpdateTexts();
         opener.LibraryChanged += OnLibraryChanged;
+        loc.LanguageChanged += OnLanguageChanged;
+        _ = RefreshAsync();
+    }
+
+    private void UpdateTexts()
+    {
+        var key = _filter switch
+        {
+            LibraryFilter.Recent => "recent",
+            LibraryFilter.All => "all",
+            LibraryFilter.Favorites => "favorites",
+            _ => "bookmarks",
+        };
+        Title = loc.Get($"lib.{key}.title");
+        EmptyTitle = loc.Get($"lib.{key}.emptyTitle");
+        EmptyDescription = loc.Get($"lib.{key}.emptyDesc");
+    }
+
+    // Dates and sizes in the list are formatted per language, so rebuild the items too.
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        UpdateTexts();
         _ = RefreshAsync();
     }
 
     public void Deactivate()
     {
         opener.LibraryChanged -= OnLibraryChanged;
+        loc.LanguageChanged -= OnLanguageChanged;
         _loadCts?.Cancel();
     }
 

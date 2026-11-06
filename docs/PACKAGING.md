@@ -43,16 +43,12 @@ Skript ketma-ket quyidagilarni bajaradi:
 
 ## 3. Yangi versiya chiqarish
 
-1. `installer\PdfReader.iss` ichida versiyani o'zgartiring:
+1. `PdfReader.csproj` ichida versiyani o'zgartiring (bu **yagona manba**: ilova ham, installer ham shundan oladi):
+   ```xml
+   <Version>1.3.0</Version>
    ```
-   #define AppVersion "1.2.0"
-   ```
-2. Paketlarni yig'ing (`.\installer\build.ps1 -Portable`).
-3. Git tegi qo'ying:
-   ```powershell
-   git tag v1.2.0
-   git push origin v1.2.0
-   ```
+2. Paketlarni yig'ing (`.\installer\build.ps1 -Portable`). Fayl nomlari avtomatik `PDFReader-Setup-1.3.0.exe` bo'ladi.
+3. GitHub Release yarating (4-bo'lim). Teg **`v` + versiya** bo'lishi shart: `v1.3.0`.
 
 `AppId` (GUID) ni **o'zgartirmang** — Windows shu orqali eski versiyani yangisi bilan almashtiradi.
 
@@ -112,3 +108,28 @@ signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f cert.pf
 | `dotnet publish failed` | `dotnet --list-sdks` da .NET 10 SDK borligini tekshiring. |
 | Eski ikonka ko'rinyapti | Windows ikonka keshi: Explorer'ni qayta ishga tushiring. |
 | Birinchi ishga tushish sekin | Normal: Windows App SDK birinchi marta yuklanadi. Keyingi safar tez. |
+
+## 8. Ilova ichidagi yangilanish
+
+Ilova ishga tushganda (va Settings → Updates → **Check for updates** bosilganda) GitHub'dagi *oxirgi* release'ni tekshiradi:
+
+`https://api.github.com/repos/gaybullayevumid/pdf-viewer/releases/latest`
+
+Yangilanish topilishi uchun release quyidagilarga javob berishi kerak:
+
+| Shart | Misol |
+| --- | --- |
+| Teg `v<versiya>` ko'rinishida va `PdfReader.csproj` dagi `<Version>` bilan bir xil | `v1.3.0` |
+| Ichida `PDFReader-Setup-*.exe` fayli bor | `PDFReader-Setup-1.3.0.exe` |
+| Draft ham, pre-release ham emas | — |
+| Teg versiyasi o'rnatilgan versiyadan **katta** | `1.3.0 > 1.2.0` |
+
+Foydalanuvchi **Install and restart** ni bosganda ilova installer'ni yuklaydi, GitHub bergan SHA-256 bilan tekshiradi, jim rejimda (`/SILENT /LAUNCH=1`) ishga tushiradi va o'zini yopadi. Installer eski versiyani almashtirib, ilovani qayta ochadi. Sozlamalar va kutubxona saqlanadi.
+
+Eslatmalar:
+
+- Repo **public** bo'lishi kerak, aks holda ilova release'larni ko'ra olmaydi.
+- Yangilanish tekshiruvi faqat 1.2.0 va undan keyingi versiyalarda bor. 1.1.0 ni o'rnatganlar 1.2.0 ga bir marta qo'lda o'tishadi.
+- Foydalanuvchi avto-tekshiruvni Settings'da o'chirib qo'yishi mumkin.
+- Faqat `github.com` va `githubusercontent.com` dan yuklanadi.
+- Sinash uchun `PDFREADER_UPDATE_URL` muhit o'zgaruvchisi bilan boshqa (lokal) manzil ko'rsatish mumkin.

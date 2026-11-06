@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using PdfReader.ViewModels;
 
 namespace PdfReader.Views;
@@ -12,4 +13,6 @@ public sealed partial class SettingsPage : Page
     {
         InitializeComponent();
     }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e) => ViewModel.Detach();
 }

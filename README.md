@@ -20,10 +20,37 @@
 - **Password-protected PDFs**: you are asked for the password when opening.
 - **Library**: *Recent*, *All PDFs* and *Favorites*; star a document to keep it handy.
 - **Remembers where you stopped**: a document reopens on the last page you read.
+- **Three languages**: English, Uzbek (O‘zbekcha) and Russian (Русский). Switch in Settings and the whole app updates instantly, with no restart.
+- **Remembers your window**: size, position, maximized and full screen state are restored on the next start, even after a crash.
+- **Full screen**: `F11` (or the toolbar / Settings); `Esc` leaves full screen.
 - **Light and dark themes** (in Settings).
+- **Updates**: the app checks GitHub Releases for a newer version and can download and install it for you (Settings → About).
 - **Private by design**: documents are processed locally and nothing is uploaded.
 
 Not available yet: text search and printing.
+
+## Settings
+
+Open **Settings** from the sidebar. Changes apply immediately and are saved automatically.
+
+| Section | What you can do |
+| --- | --- |
+| **Appearance** | Follow Windows, or force the light or dark theme. |
+| **Language** | Choose English, O‘zbekcha or Русский. On first start the app uses your Windows display language if it is one of these, otherwise English. |
+| **Window & Display** | Turn full screen on or off, choose whether the window size, position and full screen state are remembered, and reset the window layout. |
+| **About** | Current version, *Check for updates*, and automatic update checks. |
+
+## Keyboard shortcuts
+
+| Keys | Action |
+| --- | --- |
+| `Ctrl+O` | Open a PDF |
+| `F11` | Toggle full screen |
+| `Esc` | Leave full screen |
+| `Ctrl` + mouse wheel, `Ctrl` + `+` / `-` | Zoom in / out |
+| `Ctrl+0` | Fit width |
+| `Home` / `End` | First / last page |
+| `PageUp` / `PageDown` / `Space` | Scroll one screen |
 
 ## Installation
 
@@ -58,6 +85,22 @@ dotnet run -p:Platform=x64
 .\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\PdfReader.exe "C:\path\file.pdf"
 ```
 
+### Tests
+
+```powershell
+dotnet test tests\PdfReader.Tests
+```
+
+The tests cover the UI-independent logic: language selection, the translation files (every key present in all
+three languages, matching placeholders, no unused or missing keys), window placement and settings persistence,
+and update-release parsing.
+
+### Adding or changing text
+
+All user-facing text lives in `Localization/Strings/{en,uz,ru}.json`. Use the key in XAML
+(`loc:Loc.Text="settings.title"`) or in code (`Loc.Get("settings.title")`) and add it to all three files;
+the tests fail if a key is missing, unused or untranslated.
+
 To create the installer and the portable package, see [docs/PACKAGING.md](docs/PACKAGING.md).
 
 ## Project structure
@@ -71,15 +114,18 @@ To create the installer and the portable package, see [docs/PACKAGING.md](docs/P
 ├── ViewModels/             # MVVM (CommunityToolkit.Mvvm)
 ├── Services/               # opening files, navigation, theme, settings, library
 ├── Database/               # SQLite (recent files, favorites, last page)
+├── Core/                   # UI-independent logic: settings file, window placement, release parsing
+├── Localization/           # Loc (XAML helper), language list, string catalog, Strings/*.json
 ├── Models/ · Converters/
 ├── Assets/                 # icons
+├── tests/PdfReader.Tests/  # xUnit tests
 ├── installer/              # Inno Setup script and build.ps1
 └── docs/                   # documentation
 ```
 
 PDF rendering uses Windows' built-in `Windows.Data.Pdf`, so no extra native libraries are required.
 
-User data (database, settings, logs) is stored in `%LOCALAPPDATA%\PdfReader`.
+User data (database, `settings.json`, logs) is stored in `%LOCALAPPDATA%\PdfReader`.
 
 ## Icon
 

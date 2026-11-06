@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using PdfReader.Localization;
 using PdfReader.Services;
 using Windows.Data.Pdf;
 using Windows.Foundation;
@@ -54,6 +55,7 @@ public sealed partial class ViewerPage : Page
     private bool _fitWidth = true;
     private int _currentPage;
     private bool _updatingBox;
+    private string? _errorKey;
 
     /// <summary>Scroll position expressed in document DIPs.</summary>
     private double RealOffset => Scroller.VerticalOffset / _scale;
@@ -72,6 +74,7 @@ public sealed partial class ViewerPage : Page
         AddAccelerator(VirtualKey.Subtract, () => StepZoom(1 / 1.2));
         AddAccelerator((VirtualKey)189, () => StepZoom(1 / 1.2)); // Ctrl + '-'
         AddAccelerator(VirtualKey.Number0, ApplyFitWidth);
+        AddAccelerator(VirtualKey.O, () => _ = App.Services.GetRequiredService<IDocumentOpener>().PickAndOpenAsync());
 
         Pages.PointerWheelChanged += OnPagesWheel;
         KeyDown += OnKeyDown;
@@ -92,11 +95,13 @@ public sealed partial class ViewerPage : Page
     {
         _path = e.Parameter as string ?? string.Empty;
         TitleText.Text = System.IO.Path.GetFileName(_path);
+        Loc.Service.LanguageChanged += OnLanguageChanged;
         await LoadAsync();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
+        Loc.Service.LanguageChanged -= OnLanguageChanged;
         _saveTimer.Stop();
         SaveProgress();
         _doc = null;
@@ -150,7 +155,7 @@ public sealed partial class ViewerPage : Page
                     Child = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false },
                     Visibility = Visibility.Collapsed,
                 };
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_frames[i], $"Page {i + 1}");
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_frames[i], Loc.Format("viewer.page", i + 1));
                 Pages.Children.Add(_frames[i]);
             }
 
@@ -171,9 +176,10 @@ public sealed partial class ViewerPage : Page
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open {Path}", _path);
-            ErrorBar.Message = ex is FileNotFoundException or DirectoryNotFoundException or ArgumentException or UnauthorizedAccessException
-                ? "Could not open this PDF. The file was moved, deleted, or cannot be accessed."
-                : "Could not open this PDF. The file may be damaged or is not a valid PDF.";
+            _errorKey = ex is FileNotFoundException or DirectoryNotFoundException or ArgumentException or UnauthorizedAccessException
+                ? "viewer.error.access"
+                : "viewer.error.invalid";
+            ErrorBar.Message = Loc.Get(_errorKey);
             ErrorBar.IsOpen = true;
             _ = _recent.RemoveAsync(_path); // do not keep unopenable files in the library
         }
@@ -206,14 +212,14 @@ public sealed partial class ViewerPage : Page
     private async Task<string?> AskPasswordAsync(bool retry)
     {
         await WaitUntilLoadedAsync();
-        var box = new PasswordBox { PlaceholderText = "Password" };
+        var box = new PasswordBox { PlaceholderText = Loc.Get("pw.placeholder") };
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = retry ? "Incorrect password" : "Password required",
+            Title = Loc.Get(retry ? "pw.retryTitle" : "pw.title"),
             Content = box,
-            PrimaryButtonText = "Open",
-            CloseButtonText = "Cancel",
+            PrimaryButtonText = Loc.Get("pw.open"),
+            CloseButtonText = Loc.Get("pw.cancel"),
             DefaultButton = ContentDialogButton.Primary,
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary ? box.Password : null;
@@ -482,6 +488,19 @@ public sealed partial class ViewerPage : Page
     }
 
     private void ScrollBy(double delta) => Scroller.ChangeView(null, Scroller.VerticalOffset + delta * _scale, null, true);
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        if (_errorKey is not null) ErrorBar.Message = Loc.Get(_errorKey);
+        for (var i = 0; i < _frames.Length; i++)
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_frames[i], Loc.Format("viewer.page", i + 1));
+    }
+
+    private void OnOpenPdf(object sender, RoutedEventArgs e) =>
+        _ = App.Services.GetRequiredService<IDocumentOpener>().PickAndOpenAsync();
+
+    private void OnToggleFullScreen(object sender, RoutedEventArgs e) =>
+        App.Services.GetRequiredService<IWindowStateService>().ToggleFullScreen();
 
     private void OnBack(object sender, RoutedEventArgs e) =>
         App.Services.GetRequiredService<INavigationService>().GoBack();
