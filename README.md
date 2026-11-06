@@ -5,85 +5,85 @@
 <h1 align="center">PDF Reader</h1>
 
 <p align="center">
-  Windows 11 uchun tez, sodda va chiroyli PDF o'quvchi.<br />
+  A fast, simple and good-looking PDF reader for Windows 11.<br />
   WinUI 3 · .NET 10 · Windows App SDK
 </p>
 
 ---
 
-## Imkoniyatlar
+## Features
 
-- **PDF ochish** — fayl tanlash (`Ctrl+O`), oynaga sudrab tashlash, ikki marta bosish yoki *Open with → PDF Reader*.
-- **Uzluksiz o'qish** — sahifalar faqat kerak bo'lganda chiziladi, shuning uchun minglab sahifali hujjatlar ham tez ochiladi.
-- **Zoom** — `Ctrl` + sichqoncha g'ildiragi, `Ctrl` + `+` / `-`, `Ctrl+0` (kenglikka moslash), "Fit page" va 50–300% presetlar (maksimum 500%).
-- **Sahifaga o'tish** — sahifa raqamini yozing; `Home` / `End` / `PageUp` / `PageDown` / strelkalar / `Space` ishlaydi.
-- **Parolli PDF** — ochishda parol so'raladi.
-- **Kutubxona** — *Recent*, *All PDFs*, *Favorites*; yulduzcha bilan sevimlilarga qo'shish.
-- **Oxirgi sahifani eslab qoladi** — hujjat keyingi safar to'xtagan joyingizdan ochiladi.
-- **Yorug' / qorong'i mavzu** (Settings'da).
-- **Maxfiylik** — hujjatlar faqat kompyuteringizda qayta ishlanadi, internetga hech narsa yuborilmaydi.
+- **Open PDFs your way**: file picker (`Ctrl+O`), drag and drop, double-click, or *Open with → PDF Reader*.
+- **Continuous reading**: pages are rendered only when needed, so documents with thousands of pages open quickly.
+- **Zoom**: `Ctrl` + mouse wheel, `Ctrl` + `+` / `-`, `Ctrl+0` (fit width), "Fit page", and 50–300% presets (up to 500%).
+- **Page navigation**: type a page number; `Home` / `End` / `PageUp` / `PageDown` / arrow keys / `Space` all work.
+- **Password-protected PDFs**: you are asked for the password when opening.
+- **Library**: *Recent*, *All PDFs* and *Favorites*; star a document to keep it handy.
+- **Remembers where you stopped**: a document reopens on the last page you read.
+- **Light and dark themes** (in Settings).
+- **Private by design**: documents are processed locally and nothing is uploaded.
 
-Hozircha yo'q: matn bo'yicha qidirish va chop etish.
+Not available yet: text search and printing.
 
-## O'rnatish
+## Installation
 
-[Releases](../../releases) sahifasidan oxirgi versiyani yuklab oling:
+Download the latest version from the [Releases](../../releases) page:
 
-| Fayl | Nima |
+| File | Description |
 | --- | --- |
-| `PDFReader-Setup-<versiya>.exe` | O'rnatuvchi (tavsiya etiladi). Administrator huquqi kerak emas. |
-| `PDFReader-<versiya>-win-x64-portable.zip` | O'rnatishsiz: arxivni oching va `PdfReader.exe` ni ishga tushiring. |
+| `PDFReader-Setup-<version>.exe` | Installer (recommended). No administrator rights required. |
+| `PDFReader-<version>-win-x64-portable.zip` | No installation: extract the archive and run `PdfReader.exe`. |
 
-Talablar: Windows 10 (1809) yoki yangiroq, 64-bit. .NET yoki boshqa komponentni alohida o'rnatish shart emas.
+Requirements: Windows 10 (1809) or newer, 64-bit. No separate .NET or runtime installation is needed.
 
-> Windows 11 default dasturni jimgina almashtirishga ruxsat bermaydi. PDF fayllarni doim shu ilovada ochish uchun:
-> PDF'ga o'ng tugma → **Open with** → **Choose another app** → **PDF Reader** → **Always**.
+> Windows 11 does not allow apps to silently change the default PDF handler. To always open PDFs with this app:
+> right-click a PDF → **Open with** → **Choose another app** → **PDF Reader** → **Always**.
 
-## Loyihani yig'ish (dasturchilar uchun)
+## Building from source
 
-Kerak bo'ladi:
+You will need:
 
 - Windows 10/11
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- *(installer uchun)* [Inno Setup 6](https://jrsoftware.org/isdl.php)
+- *(for the installer)* [Inno Setup 6](https://jrsoftware.org/isdl.php)
 
 ```powershell
-# yig'ish
+# build
 dotnet build -p:Platform=x64
 
-# ishga tushirish
+# run
 dotnet run -p:Platform=x64
 
-# PDF bilan ishga tushirish
+# run and open a PDF
 .\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\PdfReader.exe "C:\path\file.pdf"
 ```
 
-Installer va portativ paket yaratish: [docs/PACKAGING.md](docs/PACKAGING.md).
+To create the installer and the portable package, see [docs/PACKAGING.md](docs/PACKAGING.md).
 
-## Tuzilma
+## Project structure
 
 ```
 .
-├── PdfReader.csproj        # loyiha (unpackaged, self-contained WinUI 3)
-├── App.xaml(.cs)           # kirish nuqtasi, DI konteyneri, ishga tushirish argumentlari
-├── MainWindow.xaml(.cs)    # oyna, sidebar, drag & drop
-├── Views/                  # HomePage, LibraryPage, SettingsPage, ViewerPage (PDF ko'rgich)
+├── PdfReader.csproj        # project (unpackaged, self-contained WinUI 3)
+├── App.xaml(.cs)           # entry point, DI container, launch arguments
+├── MainWindow.xaml(.cs)    # window, sidebar, drag and drop
+├── Views/                  # HomePage, LibraryPage, SettingsPage, ViewerPage (the PDF viewer)
 ├── ViewModels/             # MVVM (CommunityToolkit.Mvvm)
-├── Services/               # fayl ochish, navigatsiya, mavzu, sozlamalar, kutubxona
-├── Database/               # SQLite (oxirgi fayllar, sevimlilar, oxirgi sahifa)
+├── Services/               # opening files, navigation, theme, settings, library
+├── Database/               # SQLite (recent files, favorites, last page)
 ├── Models/ · Converters/
-├── Assets/                 # ikonkalar
-├── installer/              # Inno Setup skripti va build.ps1
-└── docs/                   # hujjatlar
+├── Assets/                 # icons
+├── installer/              # Inno Setup script and build.ps1
+└── docs/                   # documentation
 ```
 
-PDF render qilish uchun Windows'ning o'rnatilgan `Windows.Data.Pdf` moduli ishlatiladi, shuning uchun qo'shimcha native kutubxona kerak emas.
+PDF rendering uses Windows' built-in `Windows.Data.Pdf`, so no extra native libraries are required.
 
-Foydalanuvchi ma'lumotlari: `%LOCALAPPDATA%\PdfReader` (baza, sozlamalar, loglar).
+User data (database, settings, logs) is stored in `%LOCALAPPDATA%\PdfReader`.
 
-## Ikonka
+## Icon
 
-Ikonka `installer/make_icon.py` bilan chiziladi (Pillow kerak):
+The icon is drawn by `installer/make_icon.py` (requires Pillow):
 
 ```powershell
 pip install pillow
