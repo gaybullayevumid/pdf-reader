@@ -44,9 +44,11 @@ public sealed partial class ViewerPage : Page
     private string _path = string.Empty;
     private Size[] _sizes = [];
     private double[] _tops = [];
-    private Border[] _frames = [];
+    private Border?[] _frames = [];
     private int[] _renderedWidth = [];
     private int[] _generation = [];
+    private readonly HashSet<int> _rendered = [];
+    private readonly List<int> _evict = [];
     private double _zoom = 1;
     private double _scale = 1; // virtual scroll units per document DIP (<= 1)
     private int _shownFrom;
@@ -143,21 +145,7 @@ public sealed partial class ViewerPage : Page
             _tops = new double[count];
             _renderedWidth = new int[count];
             _generation = new int[count];
-            _frames = new Border[count];
-
-            for (var i = 0; i < count; i++)
-            {
-                _frames[i] = new Border
-                {
-                    Background = new SolidColorBrush(Microsoft.UI.Colors.White),
-                    BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
-                    BorderThickness = new Thickness(1),
-                    Child = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false },
-                    Visibility = Visibility.Collapsed,
-                };
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_frames[i], Loc.Format("viewer.page", i + 1));
-                Pages.Children.Add(_frames[i]);
-            }
+            _frames = new Border?[count];
 
             PageBox.Maximum = count;
             PageCountText.Text = $"/ {count}";
@@ -238,15 +226,30 @@ public sealed partial class ViewerPage : Page
 
     // ---------------------------------------------------------------- layout
 
+    /// <summary>Frames are created on demand, so opening a huge document does not build thousands of elements.</summary>
+    private Border GetFrame(int i)
+    {
+        if (_frames[i] is { } existing) return existing;
+        var frame = new Border
+        {
+            Background = new SolidColorBrush(Microsoft.UI.Colors.White),
+            BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
+            BorderThickness = new Thickness(1),
+            Child = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false },
+            Visibility = Visibility.Collapsed,
+        };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(frame, Loc.Format("viewer.page", i + 1));
+        Pages.Children.Add(frame);
+        return _frames[i] = frame;
+    }
+
     private void LayoutPages()
     {
         var y = PagePadding;
         for (var i = 0; i < _frames.Length; i++)
         {
             _tops[i] = y;
-            _frames[i].Width = _sizes[i].Width * _zoom;
-            _frames[i].Height = _sizes[i].Height * _zoom;
-            y += _frames[i].Height + PageGap;
+            y += _sizes[i].Height * _zoom + PageGap;
         }
 
         var total = y - PageGap + PagePadding;
@@ -254,7 +257,7 @@ public sealed partial class ViewerPage : Page
         Pages.Height = total * _scale;
         ApplyCanvasWidth();
 
-        for (var i = _shownFrom; i <= _shownTo; i++) _frames[i].Visibility = Visibility.Collapsed;
+        for (var i = _shownFrom; i <= _shownTo; i++) _frames[i]!.Visibility = Visibility.Collapsed;
         _shownTo = -1;
         ZoomButton.Content = $"{_zoom * 100:0}%";
     }
@@ -266,14 +269,17 @@ public sealed partial class ViewerPage : Page
     private void PositionPages(int from, int to)
     {
         for (var i = _shownFrom; i <= _shownTo; i++)
-            if (i < from || i > to) _frames[i].Visibility = Visibility.Collapsed;
+            if (i < from || i > to) _frames[i]!.Visibility = Visibility.Collapsed;
 
         var shift = Scroller.VerticalOffset - RealOffset; // canvas offset that cancels scroll compression
         for (var i = from; i <= to; i++)
         {
-            Canvas.SetTop(_frames[i], _tops[i] + shift);
-            Canvas.SetLeft(_frames[i], Math.Max(PagePadding, (Pages.Width - _frames[i].Width) / 2));
-            _frames[i].Visibility = Visibility.Visible;
+            var frame = GetFrame(i);
+            frame.Width = _sizes[i].Width * _zoom;
+            frame.Height = _sizes[i].Height * _zoom;
+            Canvas.SetTop(frame, _tops[i] + shift);
+            Canvas.SetLeft(frame, Math.Max(PagePadding, (Pages.Width - frame.Width) / 2));
+            frame.Visibility = Visibility.Visible;
         }
         _shownFrom = from;
         _shownTo = to;
@@ -345,12 +351,15 @@ public sealed partial class ViewerPage : Page
             if (_renderedWidth[i] != target) _ = RenderPageAsync(i, target);
         }
 
-        for (var i = 0; i < _frames.Length; i++)
+        _evict.Clear();
+        foreach (var i in _rendered)
+            if (i < first - keep || i > last + keep) _evict.Add(i);
+        foreach (var i in _evict)
         {
-            if (_renderedWidth[i] == 0 || (i >= first - keep && i <= last + keep)) continue;
             _generation[i]++;
             _renderedWidth[i] = 0;
-            ((Image)_frames[i].Child).Source = null;
+            _rendered.Remove(i);
+            ((Image)_frames[i]!.Child).Source = null;
         }
 
         var current = PageAt(top + Scroller.ViewportHeight / 3);
@@ -374,6 +383,7 @@ public sealed partial class ViewerPage : Page
 
         var generation = ++_generation[index];
         _renderedWidth[index] = pixelWidth;
+        _rendered.Add(index);
         var entered = false;
         try
         {
@@ -400,12 +410,12 @@ public sealed partial class ViewerPage : Page
             await bitmap.SetSourceAsync(stream);
             if (generation != _generation[index] || doc != _doc) return;
 
-            ((Image)_frames[index].Child).Source = bitmap;
+            ((Image)GetFrame(index).Child).Source = bitmap;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to render page {Page}", index + 1);
-            if (generation == _generation[index]) _renderedWidth[index] = 0;
+            if (generation == _generation[index]) { _renderedWidth[index] = 0; _rendered.Remove(index); }
         }
         finally
         {
@@ -493,7 +503,8 @@ public sealed partial class ViewerPage : Page
     {
         if (_errorKey is not null) ErrorBar.Message = Loc.Get(_errorKey);
         for (var i = 0; i < _frames.Length; i++)
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_frames[i], Loc.Format("viewer.page", i + 1));
+            if (_frames[i] is { } frame)
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(frame, Loc.Format("viewer.page", i + 1));
     }
 
     private void OnOpenPdf(object sender, RoutedEventArgs e) =>
