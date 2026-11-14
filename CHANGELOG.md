@@ -3,6 +3,18 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] - 2026-11-14
+
+### Fixed
+- **In-app updates could fail silently.** A copy of the app that hung while exiting (no window, files still
+  locked) made the installer's "close the applications" step fail; in a silent update that prompt defaults to
+  *Abort*, so the update rolled back and was offered again. The installer now closes the app itself: during an
+  in-app update it asks every running copy to close (open tabs and window state are saved) and ends any that is
+  still running after 10 seconds; an interactive install only ends copies stuck without a window.
+- The app now ends for certain after starting an update, instead of relying on the window framework's exit.
+- The installer writes a log (`%TEMP%\PdfReader-Update\install.log`) so a failed update can be diagnosed.
+- The update check uses the repository's current address (`pdf-reader`) instead of a redirect from the old name.
+
 ## [1.4.0] - 2026-11-14
 
 ### Added

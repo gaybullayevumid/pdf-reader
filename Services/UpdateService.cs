@@ -26,9 +26,9 @@ public interface IUpdateService
 }
 
 /// <summary>Checks GitHub Releases for a newer version and runs its installer.</summary>
-public sealed class UpdateService(ILogger<UpdateService> logger) : IUpdateService
+public sealed class UpdateService(ILogger<UpdateService> logger, IWindowProvider windows) : IUpdateService
 {
-    private const string LatestReleaseUrl = "https://api.github.com/repos/gaybullayevumid/pdf-viewer/releases/latest";
+    private const string LatestReleaseUrl = "https://api.github.com/repos/gaybullayevumid/pdf-reader/releases/latest";
     private const string OverrideEnvVar = "PDFREADER_UPDATE_URL"; // for testing against a local server
 
     private static readonly HttpClient Http = CreateClient();
@@ -78,12 +78,34 @@ public sealed class UpdateService(ILogger<UpdateService> logger) : IUpdateServic
         var update = Available ?? throw new InvalidOperationException("No update available.");
         var path = await DownloadAsync(update, progress, ct);
 
-        logger.LogInformation("Starting installer {Path} for {Version}", path, update.Version);
-        Process.Start(new ProcessStartInfo(path, "/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /LAUNCH=1")
+        // The installer writes a log next to itself, so a failed silent update can be diagnosed.
+        var log = Path.Combine(Path.GetDirectoryName(path)!, "install.log");
+        logger.LogInformation("Starting installer {Path} for {Version} (log: {Log})", path, update.Version, log);
+        Process.Start(new ProcessStartInfo(path, $"/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /LAUNCH=1 /LOG=\"{log}\"")
         {
             UseShellExecute = true, // lets Windows show the elevation prompt if the install is per-machine
         });
-        Application.Current.Exit();
+        ExitForUpdate();
+    }
+
+    /// <summary>
+    /// The installer cannot replace the files of a process that is still running, and a WinUI process has been seen
+    /// to linger without a window after <see cref="Application.Exit"/>, which made the silent update fail. So the
+    /// app shuts down normally (closing the window saves the window state and open tabs), then ends for certain.
+    /// </summary>
+    private void ExitForUpdate()
+    {
+        try
+        {
+            windows.Window.Close();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Closing the window before the update failed");
+        }
+        logger.LogInformation("Exiting for the update");
+        Serilog.Log.CloseAndFlush();
+        Environment.Exit(0);
     }
 
     private async Task<string> DownloadAsync(UpdateInfo update, IProgress<double>? progress, CancellationToken ct)

@@ -54,3 +54,37 @@ function LaunchAfterSilentInstall: Boolean;
 begin
   Result := WizardSilent and (ExpandConstant('{param:launch|0}') = '1');
 end;
+
+// The Restart Manager cannot close this app: it found running copies but could not shut them down, and in a
+// silent update the suppressed "close the applications" prompt defaults to Abort, so the update rolled back.
+// So Setup closes the app itself before installing:
+//  - a silent install (the in-app updater) asks every copy running from the install folder to close, as clicking
+//    X would (open tabs and the window state are saved), and ends whatever is still running after 10 seconds;
+//  - an interactive install only ends copies without a window, which are stuck while exiting and would keep the
+//    files locked; copies with a window are left to the usual "close the applications" page.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  Script, Params: String;
+  ResultCode: Integer;
+begin
+  Script :=
+    'param([string]$Dir, [switch]$CloseAll)' + #13#10 +
+    '$Dir = $Dir.TrimEnd(''\'') + ''\''' + #13#10 +
+    'function Running { Get-Process PdfReader -ErrorAction SilentlyContinue | Where-Object {' + #13#10 +
+    '  $_.Path -and $_.Path.StartsWith($Dir, [StringComparison]::OrdinalIgnoreCase) -and ($CloseAll -or $_.MainWindowHandle -eq 0) } }' + #13#10 +
+    'Running | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { Write-Output "Asking PdfReader $($_.Id) to close"; [void]$_.CloseMainWindow() }' + #13#10 +
+    '$deadline = (Get-Date).AddSeconds(10)' + #13#10 +
+    'while ((Running) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }' + #13#10 +
+    'Running | ForEach-Object { Write-Output "Ending PdfReader $($_.Id)"; Stop-Process -Id $_.Id -Force }' + #13#10;
+  if SaveStringToFile(ExpandConstant('{tmp}\close-app.ps1'), Script, False) then
+  begin
+    Params := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\close-app.ps1') +
+      '" -Dir "' + ExpandConstant('{app}') + '"';
+    if WizardSilent then Params := Params + ' -CloseAll';
+    Log('Closing running copies of the app in ' + ExpandConstant('{app}') + ' (silent: ' + IntToStr(Ord(WizardSilent)) + ')');
+    if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Params, '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode) then
+      Log('Could not run the close script');
+  end;
+  Result := '';
+end;

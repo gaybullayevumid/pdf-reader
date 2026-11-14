@@ -113,7 +113,7 @@ signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f cert.pf
 
 Ilova ishga tushganda (va Settings → Updates → **Check for updates** bosilganda) GitHub'dagi *oxirgi* release'ni tekshiradi:
 
-`https://api.github.com/repos/gaybullayevumid/pdf-viewer/releases/latest`
+`https://api.github.com/repos/gaybullayevumid/pdf-reader/releases/latest`
 
 Yangilanish topilishi uchun release quyidagilarga javob berishi kerak:
 
