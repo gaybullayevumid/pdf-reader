@@ -3,6 +3,13 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-11-14
+
+### Fixed
+- **Settings no longer stretch across the window in full screen.** The settings cards now sit in a centered column
+  of at most 950 px with balanced margins (narrower margins on small windows), so the page looks the same in a
+  normal window, maximized and in full screen.
+
 ## [1.5.0] - 2026-11-14
 
 ### Changed

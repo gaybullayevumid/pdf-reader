@@ -6,131 +6,157 @@
     xmlns:components="using:PdfReader.Views.Components"
     xmlns:loc="using:PdfReader.Localization">
 
-    <ScrollViewer>
-        <StackPanel
-            Padding="28,12,28,32"
-            MaxWidth="1400"
-            HorizontalAlignment="Stretch"
-            Spacing="6">
+    <!--
+        Layout: the ScrollViewer scrolls vertically only; the outer Grid holds the side margins (narrower on small
+        windows); the content column inside is capped at a readable width and centered, so the cards keep one
+        width and balanced margins in a normal window, maximized and in full screen.
+    -->
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="ContentHost" Padding="28,12,28,32">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup>
+                    <VisualState x:Name="Wide">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="641" />
+                        </VisualState.StateTriggers>
+                    </VisualState>
+                    <VisualState x:Name="Narrow">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ContentHost.Padding" Value="16,8,16,24" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
 
-            <TextBlock
-                Margin="0,0,0,10"
-                loc:Loc.Text="settings.title"
-                Style="{StaticResource TitleLargeTextBlockStyle}" />
+            <!--  Stretch + MaxWidth: fills the window up to 950 px, then stays centered.  -->
+            <StackPanel
+                x:Name="SettingsContent"
+                MaxWidth="950"
+                HorizontalAlignment="Stretch"
+                Spacing="6">
 
-            <!-- Appearance -->
-            <TextBlock
-                Margin="1,6,0,2"
-                loc:Loc.Text="settings.appearance"
-                Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <components:SettingCard
-                DescriptionKey="theme.desc"
-                Glyph="&#xE790;"
-                TitleKey="theme.title">
-                <components:SettingCard.ActionContent>
-                    <ComboBox
-                        MinWidth="180"
-                        loc:Loc.AutomationName="theme.title"
-                        SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}">
-                        <ComboBoxItem loc:Loc.Content="theme.system" />
-                        <ComboBoxItem loc:Loc.Content="theme.light" />
-                        <ComboBoxItem loc:Loc.Content="theme.dark" />
-                    </ComboBox>
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    loc:Loc.Text="settings.title"
+                    Style="{StaticResource TitleLargeTextBlockStyle}" />
 
-            <!-- Language -->
-            <TextBlock
-                Margin="1,14,0,2"
-                loc:Loc.Text="settings.language"
-                Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <components:SettingCard
-                DescriptionKey="language.desc"
-                Glyph="&#xE774;"
-                TitleKey="language.title">
-                <components:SettingCard.ActionContent>
-                    <ComboBox
-                        MinWidth="180"
-                        loc:Loc.AutomationName="language.title"
-                        DisplayMemberPath="NativeName"
-                        ItemsSource="{x:Bind ViewModel.AvailableLanguages}"
-                        SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}" />
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
+                <!-- Appearance -->
+                <TextBlock
+                    Margin="1,6,0,2"
+                    loc:Loc.Text="settings.appearance"
+                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <components:SettingCard
+                    DescriptionKey="theme.desc"
+                    Glyph="&#xE790;"
+                    TitleKey="theme.title">
+                    <components:SettingCard.ActionContent>
+                        <ComboBox
+                            MinWidth="180"
+                            loc:Loc.AutomationName="theme.title"
+                            SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}">
+                            <ComboBoxItem loc:Loc.Content="theme.system" />
+                            <ComboBoxItem loc:Loc.Content="theme.light" />
+                            <ComboBoxItem loc:Loc.Content="theme.dark" />
+                        </ComboBox>
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
 
-            <!-- Window & Display -->
-            <TextBlock
-                Margin="1,14,0,2"
-                loc:Loc.Text="settings.window"
-                Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <components:SettingCard
-                DescriptionKey="window.fullscreen.desc"
-                Glyph="&#xE740;"
-                TitleKey="window.fullscreen.title">
-                <components:SettingCard.ActionContent>
-                    <ToggleSwitch
-                        loc:Loc.AutomationName="window.fullscreen.title"
-                        loc:Loc.OffContent="common.off"
-                        loc:Loc.OnContent="common.on"
-                        IsOn="{x:Bind ViewModel.IsFullScreen, Mode=TwoWay}" />
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
-            <components:SettingCard
-                DescriptionKey="window.remember.desc"
-                Glyph="&#xE7F4;"
-                TitleKey="window.remember.title">
-                <components:SettingCard.ActionContent>
-                    <ToggleSwitch
-                        loc:Loc.AutomationName="window.remember.title"
-                        loc:Loc.OffContent="common.off"
-                        loc:Loc.OnContent="common.on"
-                        IsOn="{x:Bind ViewModel.RememberWindowState, Mode=TwoWay}" />
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
-            <components:SettingCard
-                DescriptionKey="window.reset.desc"
-                Glyph="&#xE777;"
-                TitleKey="window.reset.title">
-                <components:SettingCard.ActionContent>
-                    <Button loc:Loc.Content="window.reset.button" Command="{x:Bind ViewModel.ResetWindowCommand}" />
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
+                <!-- Language -->
+                <TextBlock
+                    Margin="1,14,0,2"
+                    loc:Loc.Text="settings.language"
+                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <components:SettingCard
+                    DescriptionKey="language.desc"
+                    Glyph="&#xE774;"
+                    TitleKey="language.title">
+                    <components:SettingCard.ActionContent>
+                        <ComboBox
+                            MinWidth="180"
+                            loc:Loc.AutomationName="language.title"
+                            DisplayMemberPath="NativeName"
+                            ItemsSource="{x:Bind ViewModel.AvailableLanguages}"
+                            SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}" />
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
 
-            <!-- About -->
-            <TextBlock
-                Margin="1,14,0,2"
-                loc:Loc.Text="settings.about"
-                Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <components:SettingCard
-                DescriptionKey="about.desc"
-                Glyph="&#xE946;"
-                Title="PDF Reader" />
-            <components:SettingCard
-                Description="{x:Bind ViewModel.UpdateStatus, Mode=OneWay}"
-                Glyph="&#xE895;"
-                Title="{x:Bind ViewModel.VersionText, Mode=OneWay}">
-                <components:SettingCard.ActionContent>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button
-                            Command="{x:Bind ViewModel.InstallCommand}"
-                            Content="{x:Bind ViewModel.InstallLabel, Mode=OneWay}"
-                            Style="{StaticResource AccentButtonStyle}"
-                            Visibility="{x:Bind ViewModel.CanInstall, Mode=OneWay}" />
-                        <Button loc:Loc.Content="update.check" Command="{x:Bind ViewModel.CheckCommand}" />
-                    </StackPanel>
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
-            <components:SettingCard
-                Glyph="&#xE72C;"
-                TitleKey="about.auto">
-                <components:SettingCard.ActionContent>
-                    <ToggleSwitch
-                        loc:Loc.AutomationName="about.auto"
-                        loc:Loc.OffContent="common.off"
-                        loc:Loc.OnContent="common.on"
-                        IsOn="{x:Bind ViewModel.AutoCheckUpdates, Mode=TwoWay}" />
-                </components:SettingCard.ActionContent>
-            </components:SettingCard>
-        </StackPanel>
+                <!-- Window & Display -->
+                <TextBlock
+                    Margin="1,14,0,2"
+                    loc:Loc.Text="settings.window"
+                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <components:SettingCard
+                    DescriptionKey="window.fullscreen.desc"
+                    Glyph="&#xE740;"
+                    TitleKey="window.fullscreen.title">
+                    <components:SettingCard.ActionContent>
+                        <ToggleSwitch
+                            loc:Loc.AutomationName="window.fullscreen.title"
+                            loc:Loc.OffContent="common.off"
+                            loc:Loc.OnContent="common.on"
+                            IsOn="{x:Bind ViewModel.IsFullScreen, Mode=TwoWay}" />
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
+                <components:SettingCard
+                    DescriptionKey="window.remember.desc"
+                    Glyph="&#xE7F4;"
+                    TitleKey="window.remember.title">
+                    <components:SettingCard.ActionContent>
+                        <ToggleSwitch
+                            loc:Loc.AutomationName="window.remember.title"
+                            loc:Loc.OffContent="common.off"
+                            loc:Loc.OnContent="common.on"
+                            IsOn="{x:Bind ViewModel.RememberWindowState, Mode=TwoWay}" />
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
+                <components:SettingCard
+                    DescriptionKey="window.reset.desc"
+                    Glyph="&#xE777;"
+                    TitleKey="window.reset.title">
+                    <components:SettingCard.ActionContent>
+                        <Button loc:Loc.Content="window.reset.button" Command="{x:Bind ViewModel.ResetWindowCommand}" />
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
+
+                <!-- About -->
+                <TextBlock
+                    Margin="1,14,0,2"
+                    loc:Loc.Text="settings.about"
+                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <components:SettingCard
+                    DescriptionKey="about.desc"
+                    Glyph="&#xE946;"
+                    Title="PDF Reader" />
+                <components:SettingCard
+                    Description="{x:Bind ViewModel.UpdateStatus, Mode=OneWay}"
+                    Glyph="&#xE895;"
+                    Title="{x:Bind ViewModel.VersionText, Mode=OneWay}">
+                    <components:SettingCard.ActionContent>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.InstallCommand}"
+                                Content="{x:Bind ViewModel.InstallLabel, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Visibility="{x:Bind ViewModel.CanInstall, Mode=OneWay}" />
+                            <Button loc:Loc.Content="update.check" Command="{x:Bind ViewModel.CheckCommand}" />
+                        </StackPanel>
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
+                <components:SettingCard
+                    Glyph="&#xE72C;"
+                    TitleKey="about.auto">
+                    <components:SettingCard.ActionContent>
+                        <ToggleSwitch
+                            loc:Loc.AutomationName="about.auto"
+                            loc:Loc.OffContent="common.off"
+                            loc:Loc.OnContent="common.on"
+                            IsOn="{x:Bind ViewModel.AutoCheckUpdates, Mode=TwoWay}" />
+                    </components:SettingCard.ActionContent>
+                </components:SettingCard>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>
