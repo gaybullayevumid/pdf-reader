@@ -3,6 +3,12 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- *Install and restart* installed the update found when the app started, even if a newer release had been
+  published while the app stayed open. It now checks again just before downloading and installs the newest one.
+
 ## [1.4.1] - 2026-11-14
 
 ### Fixed

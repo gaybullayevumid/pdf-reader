@@ -75,6 +75,9 @@ public sealed class UpdateService(ILogger<UpdateService> logger, IWindowProvider
 
     public async Task InstallAsync(IProgress<double>? progress = null, CancellationToken ct = default)
     {
+        // The release found when the app started may have been superseded since (the app can stay open for hours),
+        // so look again and install the newest one. If the check fails, the release already found is used.
+        await CheckAsync(ct);
         var update = Available ?? throw new InvalidOperationException("No update available.");
         var path = await DownloadAsync(update, progress, ct);
 
