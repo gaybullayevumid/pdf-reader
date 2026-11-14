@@ -54,8 +54,57 @@ public sealed partial class MainWindow : Window
         Loc.SetAutomationName(item, "nav.settings");
     }
 
-    private void OnPaneToggleRequested(TitleBar sender, object args) =>
-        NavView.IsPaneOpen = !NavView.IsPaneOpen;
+    // ---------------------------------------------------------------- layout
+
+    /// <summary>Below this width the Open button drops its label; the navigation bar overflows on its own.</summary>
+    private const double CompactWidth = 860;
+
+    private void OnRootSizeChanged(object sender, SizeChangedEventArgs e) =>
+        OpenLabel.Visibility = e.NewSize.Width < CompactWidth ? Visibility.Collapsed : Visibility.Visible;
+
+    // ---------------------------------------------------------------- search
+
+    private CancellationTokenSource? _searchCts;
+
+    private void OnSearchShortcut(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        SearchBox.Focus(FocusState.Keyboard);
+        args.Handled = true;
+    }
+
+    /// <summary>Suggests library documents as the user types; a newer query cancels the one still running.</summary>
+    private async void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
+
+        _searchCts?.Cancel();
+        var cts = _searchCts = new CancellationTokenSource();
+        try
+        {
+            var results = await ViewModel.SearchAsync(sender.Text, cts.Token);
+            if (!cts.IsCancellationRequested) sender.ItemsSource = results;
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    /// <summary>Opens the chosen suggestion, or the best match when Enter is pressed without choosing one.</summary>
+    private async void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        var document = args.ChosenSuggestion as PdfDocumentInfo
+            ?? (await ViewModel.SearchAsync(args.QueryText)).FirstOrDefault();
+        if (document is null) return;
+
+        _searchCts?.Cancel();
+        sender.Text = string.Empty;
+        sender.ItemsSource = null;
+        await ViewModel.OpenAsync(document);
+    }
+
+    private void OnOpenShortcut(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.OpenPdfCommand.Execute(null);
+        args.Handled = true;
+    }
 
     private void OnToggleFullScreen(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
@@ -71,9 +120,9 @@ public sealed partial class MainWindow : Window
     }
 
     private bool _syncingSelection;
-    private object? _pageMenuItem; // the sidebar entry of the page in the Frame
+    private object? _pageMenuItem; // the navigation bar entry of the page in the Frame
 
-    /// <summary>Remembers which sidebar entry belongs to the page shown in the Frame.</summary>
+    /// <summary>Remembers which navigation bar entry belongs to the page shown in the Frame.</summary>
     private void OnFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         _pageMenuItem = e.SourcePageType.Name switch
@@ -86,7 +135,7 @@ public sealed partial class MainWindow : Window
         SyncSidebarSelection();
     }
 
-    /// <summary>The sidebar shows the page's entry, or nothing while a document is in front.</summary>
+    /// <summary>The navigation bar highlights the page's entry, or nothing while a document is in front.</summary>
     private void SyncSidebarSelection()
     {
         _syncingSelection = true;
@@ -106,9 +155,6 @@ public sealed partial class MainWindow : Window
         DocumentHost.Visibility = viewer is null ? Visibility.Collapsed : Visibility.Visible;
         ContentFrame.Visibility = viewer is null ? Visibility.Visible : Visibility.Collapsed;
 
-        // The viewer brings its own toolbar, so the app toolbar would only waste a row of space.
-        Toolbar.Visibility = viewer is null ? Visibility.Visible : Visibility.Collapsed;
-
         SyncTabSelection();
         SyncSidebarSelection();
     }
@@ -126,7 +172,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private void OnTabsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        TabBar.Visibility = TabService.Tabs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         _syncingTabs = true;
         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, SyncTabSelection);
     }
@@ -179,9 +224,6 @@ public sealed partial class MainWindow : Window
         var tag = args.IsSettingsSelected ? "settings" : (args.SelectedItemContainer?.Tag as string ?? "home");
         ViewModel.Navigate(tag);
     }
-
-    private void OnOpenSettings(object sender, RoutedEventArgs e) =>
-        NavView.SelectedItem = NavView.SettingsItem;
 
     private void OnDragOver(object sender, DragEventArgs e)
     {

@@ -84,7 +84,7 @@ public sealed partial class ViewerPage : Page
         AddAccelerator(VirtualKey.Subtract, () => StepZoom(1 / 1.2));
         AddAccelerator((VirtualKey)189, () => StepZoom(1 / 1.2)); // Ctrl + '-'
         AddAccelerator(VirtualKey.Number0, ApplyFitWidth);
-        AddAccelerator(VirtualKey.O, () => _ = App.Services.GetRequiredService<IDocumentOpener>().PickAndOpenAsync());
+        // Ctrl+O (open) and F11 (full screen) are window-wide shortcuts handled by MainWindow.
 
         Pages.PointerWheelChanged += OnPagesWheel;
         KeyDown += OnKeyDown;
@@ -719,12 +719,6 @@ public sealed partial class ViewerPage : Page
             if (_frames[i] is { } frame)
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(frame, Loc.Format("viewer.page", i + 1));
     }
-
-    private void OnOpenPdf(object sender, RoutedEventArgs e) =>
-        _ = App.Services.GetRequiredService<IDocumentOpener>().PickAndOpenAsync();
-
-    private void OnToggleFullScreen(object sender, RoutedEventArgs e) =>
-        App.Services.GetRequiredService<IWindowStateService>().ToggleFullScreen();
 
     private void OnBack(object sender, RoutedEventArgs e) =>
         App.Services.GetRequiredService<INavigationService>().GoBack();

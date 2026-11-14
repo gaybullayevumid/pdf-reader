@@ -10,6 +10,8 @@
   "toolbar.open.tip": "Открыть PDF (Ctrl+O)",
   "toolbar.fullscreen": "Полный экран",
   "toolbar.fullscreen.tip": "Полный экран (F11)",
+  "search.placeholder": "Поиск PDF (Ctrl+Space)",
+  "search.name": "Поиск PDF",
 
   "home.welcome": "Добро пожаловать в PDF Reader",
   "home.subtitle": "Откройте PDF, чтобы начать чтение, или продолжите с того места, где остановились.",
@@ -48,8 +50,6 @@
   "viewer.page": "Страница {0}",
   "viewer.error.access": "Не удалось открыть PDF. Файл перемещён, удалён или недоступен.",
   "viewer.error.invalid": "Не удалось открыть PDF. Файл повреждён или не является PDF-документом.",
-  "viewer.open": "Открыть PDF (Ctrl+O)",
-  "viewer.fullscreen": "Полный экран (F11)",
   "viewer.copy": "Копировать",
   "viewer.selectAll": "Выделить всё",
 

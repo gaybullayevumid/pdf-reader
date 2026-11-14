@@ -5,7 +5,7 @@ using PdfReader.Views;
 namespace PdfReader.Services;
 
 /// <summary>
-/// Sidebar navigation between the library and settings pages. Documents live in tabs
+/// Navigation-bar navigation between the library and settings pages. Documents live in tabs
 /// (<see cref="IDocumentTabService"/>): showing a page only hides the active document, it never closes a tab.
 /// </summary>
 public interface INavigationService

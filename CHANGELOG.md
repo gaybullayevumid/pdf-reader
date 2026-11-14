@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Changed
+- **Top navigation instead of the sidebar.** Home, Recent files, All PDFs, Favorites and Bookmarks now sit in a
+  horizontal Fluent navigation bar under the title bar, with *Open PDF*, *Full screen* and *Settings* on the right.
+  The reading area gets the full window width. On narrow windows the entries that don't fit move into a `…` menu.
+- The document tab bar is always shown (even with no file open) and its selected tab merges into the content
+  surface. Switching pages still never closes a tab, and each tab keeps its page, zoom and scroll position.
+- The viewer's own *Open* and *Full screen* buttons were removed: the navigation bar has them while reading too.
+
+### Added
+- **Search** in the title bar (Ctrl+Space): finds library PDFs by file name as you type; Enter opens the best match.
+
 ### Fixed
 - *Install and restart* installed the update found when the app started, even if a newer release had been
   published while the app stayed open. It now checks again just before downloading and installs the newest one.

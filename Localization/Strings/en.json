@@ -10,6 +10,8 @@
   "toolbar.open.tip": "Open PDF (Ctrl+O)",
   "toolbar.fullscreen": "Full screen",
   "toolbar.fullscreen.tip": "Full screen (F11)",
+  "search.placeholder": "Search PDFs (Ctrl+Space)",
+  "search.name": "Search PDFs",
 
   "home.welcome": "Welcome to PDF Reader",
   "home.subtitle": "Open a PDF to start reading, or pick up where you left off.",
@@ -48,8 +50,6 @@
   "viewer.page": "Page {0}",
   "viewer.error.access": "Could not open this PDF. The file was moved, deleted, or cannot be accessed.",
   "viewer.error.invalid": "Could not open this PDF. The file may be damaged or is not a valid PDF.",
-  "viewer.open": "Open PDF (Ctrl+O)",
-  "viewer.fullscreen": "Full screen (F11)",
   "viewer.copy": "Copy",
   "viewer.selectAll": "Select all",
 

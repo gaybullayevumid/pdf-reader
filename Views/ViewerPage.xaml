@@ -93,23 +93,7 @@
                     Click="OnZoomIn">
                     <FontIcon FontSize="16" Glyph="&#xE8A3;" />
                 </Button>
-                <AppBarSeparator />
-                <Button
-                    Background="Transparent"
-                    BorderThickness="0"
-                    loc:Loc.AutomationName="viewer.open"
-                    loc:Loc.ToolTip="viewer.open"
-                    Click="OnOpenPdf">
-                    <FontIcon FontSize="16" Glyph="&#xE8E5;" />
-                </Button>
-                <Button
-                    Background="Transparent"
-                    BorderThickness="0"
-                    loc:Loc.AutomationName="viewer.fullscreen"
-                    loc:Loc.ToolTip="viewer.fullscreen"
-                    Click="OnToggleFullScreen">
-                    <FontIcon FontSize="16" Glyph="&#xE740;" />
-                </Button>
+                <!--  Open PDF and full screen live in the window's navigation bar, which stays visible while reading.  -->
             </StackPanel>
         </Grid>
 

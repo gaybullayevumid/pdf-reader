@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using PdfReader.Models;
 using PdfReader.Services;
 
 namespace PdfReader.ViewModels;
@@ -11,19 +13,25 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IUpdateService _updates;
     private readonly IWindowStateService _window;
     private readonly ILocalizationService _loc;
+    private readonly IRecentFilesService _library;
+    private readonly ILogger<MainViewModel> _logger;
 
     public MainViewModel(
         IDocumentOpener opener,
         INavigationService navigation,
         IUpdateService updates,
         IWindowStateService window,
-        ILocalizationService loc)
+        ILocalizationService loc,
+        IRecentFilesService library,
+        ILogger<MainViewModel> logger)
     {
         _opener = opener;
         _navigation = navigation;
         _updates = updates;
         _window = window;
         _loc = loc;
+        _library = library;
+        _logger = logger;
 
         _updates.AvailableChanged += (_, _) => ShowUpdate();
         _loc.LanguageChanged += (_, _) =>
@@ -91,4 +99,38 @@ public sealed partial class MainViewModel : ObservableObject
     private void ToggleFullScreen() => _window.ToggleFullScreen();
 
     public void Navigate(string tag) => _navigation.NavigateTo(tag);
+
+    // ---------------------------------------------------------------- search
+
+    private const int MaxSearchResults = 8;
+
+    /// <summary>
+    /// Library documents whose file name contains every word of <paramref name="text"/>, most recently opened
+    /// first. Empty for blank text, and on a database error (logged): search must never break the title bar.
+    /// </summary>
+    public async Task<IReadOnlyList<PdfDocumentInfo>> SearchAsync(string text, CancellationToken ct = default)
+    {
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (words.Length == 0) return [];
+        try
+        {
+            var all = await _library.QueryAsync(LibraryFilter.All, limit: 2000, ct);
+            return all
+                .Where(d => words.All(w => d.Name.Contains(w, StringComparison.CurrentCultureIgnoreCase)))
+                .OrderByDescending(d => d.LastOpened)
+                .Take(MaxSearchResults)
+                .ToList();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Search failed");
+            return [];
+        }
+    }
+
+    public Task OpenAsync(PdfDocumentInfo document) => _opener.OpenAsync([document.Path]);
 }

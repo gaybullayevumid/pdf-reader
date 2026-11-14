@@ -63,6 +63,7 @@ public static class Loc
     public static readonly DependencyProperty PlaceholderProperty = Register("Placeholder", d => d switch
     {
         PasswordBox => PasswordBox.PlaceholderTextProperty,
+        AutoSuggestBox => AutoSuggestBox.PlaceholderTextProperty,
         TextBox => TextBox.PlaceholderTextProperty,
         ComboBox => ComboBox.PlaceholderTextProperty,
         _ => null,

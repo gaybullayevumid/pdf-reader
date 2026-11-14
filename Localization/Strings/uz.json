@@ -10,6 +10,8 @@
   "toolbar.open.tip": "PDF ochish (Ctrl+O)",
   "toolbar.fullscreen": "To‘liq ekran",
   "toolbar.fullscreen.tip": "To‘liq ekran (F11)",
+  "search.placeholder": "PDF qidirish (Ctrl+Space)",
+  "search.name": "PDF qidirish",
 
   "home.welcome": "PDF Reader’ga xush kelibsiz",
   "home.subtitle": "O‘qishni boshlash uchun PDF faylni oching yoki to‘xtagan joyingizdan davom eting.",
@@ -48,8 +50,6 @@
   "viewer.page": "{0}-sahifa",
   "viewer.error.access": "PDF faylni ochib bo‘lmadi. Fayl ko‘chirilgan, o‘chirilgan yoki unga kirish imkoni yo‘q.",
   "viewer.error.invalid": "PDF faylni ochib bo‘lmadi. Fayl buzilgan yoki PDF formatida emas.",
-  "viewer.open": "PDF ochish (Ctrl+O)",
-  "viewer.fullscreen": "To‘liq ekran (F11)",
   "viewer.copy": "Nusxa olish",
   "viewer.selectAll": "Hammasini belgilash",
 
