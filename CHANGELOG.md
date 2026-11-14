@@ -3,6 +3,24 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-14
+
+### Added
+- **Text selection**: drag over a page with the mouse or pen to select text, across pages too (the view scrolls
+  when the pointer leaves it); double-click selects a word, Shift+click extends the selection. `Ctrl+C` or the
+  right-click menu copies, `Ctrl+A` selects all. The cursor turns into an I-beam over text. Text is read with
+  PdfPig on demand, off the UI thread; scanned pages without a text layer cannot be selected.
+
+### Changed
+- Very long documents scroll 1:1 with the mouse wheel and keyboard: the page canvas is a window that slides along
+  the document instead of a compressed scroll range, with a scroll bar that spans the whole document. Page frames
+  are recycled, so memory stays flat however many pages are scrolled past.
+- The page number box widens for documents with many pages.
+
+### Fixed
+- Shortcut tooltips (`Ctrl++`, `F11`) no longer pop up over the pages while scrolling.
+- Home, End, Page Up and Page Down jump correctly in very long documents.
+
 ## [1.2.0] - 2026-11-06
 
 ### Added

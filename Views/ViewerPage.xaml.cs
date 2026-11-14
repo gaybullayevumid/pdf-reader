@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using PdfReader.Core;
 using PdfReader.Localization;
 using PdfReader.Services;
 using Windows.Data.Pdf;
@@ -30,9 +31,8 @@ public sealed partial class ViewerPage : Page
     private const double MaxBitmapPixels = 16_000_000;
     private const double MaxBitmapHeight = 12_000;
     private const int KeepAround = 4;
+    private const int PendingTimeoutMs = 250;
 
-    // XAML cannot scroll past ~1M DIPs, so very long documents are mapped onto a shorter scroll range.
-    private const double MaxExtent = 600_000;
     private const int WrongPasswordHResult = unchecked((int)0x8007052B);
 
     private readonly IRecentFilesService _recent = App.Services.GetRequiredService<IRecentFilesService>();
@@ -49,18 +49,23 @@ public sealed partial class ViewerPage : Page
     private int[] _generation = [];
     private readonly HashSet<int> _rendered = [];
     private readonly List<int> _evict = [];
+    private readonly Stack<Border> _framePool = new();
     private double _zoom = 1;
-    private double _scale = 1; // virtual scroll units per document DIP (<= 1)
+    private double _total; // document height in DIPs
+    private double _windowStart; // document offset of the top of the scrollable canvas (see ScrollWindow)
+    private double? _pendingOffset; // target of a ChangeView that has not landed yet
+    private long _pendingSince;
     private int _shownFrom;
     private int _shownTo = -1;
     private double _maxPageWidth = 1;
     private bool _fitWidth = true;
     private int _currentPage;
     private bool _updatingBox;
+    private bool _updatingBar;
     private string? _errorKey;
 
     /// <summary>Scroll position expressed in document DIPs.</summary>
-    private double RealOffset => Scroller.VerticalOffset / _scale;
+    private double RealOffset => _pendingOffset ?? _windowStart + Scroller.VerticalOffset;
 
     public ViewerPage()
     {
@@ -80,6 +85,10 @@ public sealed partial class ViewerPage : Page
 
         Pages.PointerWheelChanged += OnPagesWheel;
         KeyDown += OnKeyDown;
+        // The scroller would handle Home/End/PageUp/PageDown itself, but it only knows the current window.
+        Scroller.PreviewKeyDown += OnKeyDown;
+
+        InitializeSelection();
     }
 
     private void AddAccelerator(VirtualKey key, Action action)
@@ -107,6 +116,7 @@ public sealed partial class ViewerPage : Page
         _saveTimer.Stop();
         SaveProgress();
         _doc = null;
+        CloseTextLayer();
     }
 
     // ---------------------------------------------------------------- loading
@@ -118,7 +128,7 @@ public sealed partial class ViewerPage : Page
         {
             await WaitUntilLoadedAsync();
             var file = await StorageFile.GetFileFromPathAsync(_path);
-            var doc = await LoadDocumentAsync(file);
+            var (doc, password) = await LoadDocumentAsync(file);
             if (doc is null)
             {
                 App.Services.GetRequiredService<INavigationService>().GoBack();
@@ -140,6 +150,7 @@ public sealed partial class ViewerPage : Page
             });
 
             _doc = doc;
+            OpenTextLayer(password);
             _sizes = sizes;
             _maxPageWidth = Math.Max(1, sizes.Max(s => s.Width));
             _tops = new double[count];
@@ -148,6 +159,7 @@ public sealed partial class ViewerPage : Page
             _frames = new Border?[count];
 
             PageBox.Maximum = count;
+            PageBox.Width = Math.Max(64, 40 + 10 * count.ToString().Length);
             PageCountText.Text = $"/ {count}";
 
             var info = await _recent.GetAsync(_path);
@@ -177,22 +189,26 @@ public sealed partial class ViewerPage : Page
         }
     }
 
-    /// <summary>Loads the document, asking for a password when it is encrypted. Returns null if the user cancels.</summary>
-    private async Task<PdfDocument?> LoadDocumentAsync(StorageFile file)
+    /// <summary>
+    /// Loads the document, asking for a password when it is encrypted, and returns the password that opened it
+    /// (the text layer needs it too). The document is null if the user cancels.
+    /// </summary>
+    private async Task<(PdfDocument? Doc, string? Password)> LoadDocumentAsync(StorageFile file)
     {
         string? password = null;
         while (true)
         {
             try
             {
-                return password is null
+                var doc = password is null
                     ? await PdfDocument.LoadFromFileAsync(file)
                     : await PdfDocument.LoadFromFileAsync(file, password);
+                return (doc, password);
             }
             catch (Exception ex) when (ex.HResult == WrongPasswordHResult)
             {
                 password = await AskPasswordAsync(retry: password is not null);
-                if (password is null) return null;
+                if (password is null) return (null, null);
             }
         }
     }
@@ -226,21 +242,57 @@ public sealed partial class ViewerPage : Page
 
     // ---------------------------------------------------------------- layout
 
-    /// <summary>Frames are created on demand, so opening a huge document does not build thousands of elements.</summary>
+    /// <summary>Only pages near the viewport own a frame; frames are recycled, so the element count stays small.</summary>
     private Border GetFrame(int i)
     {
         if (_frames[i] is { } existing) return existing;
-        var frame = new Border
+        if (!_framePool.TryPop(out var frame))
         {
-            Background = new SolidColorBrush(Microsoft.UI.Colors.White),
-            BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
-            BorderThickness = new Thickness(1),
-            Child = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false },
-            Visibility = Visibility.Collapsed,
-        };
+            frame = new Border
+            {
+                Background = new SolidColorBrush(Microsoft.UI.Colors.White),
+                BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
+                BorderThickness = new Thickness(1),
+                Child = new Grid
+                {
+                    IsHitTestVisible = false,
+                    Children =
+                    {
+                        new Image { Stretch = Stretch.Fill },
+                        new Viewbox
+                        {
+                            Stretch = Stretch.Fill,
+                            Child = new Canvas { Width = HighlightSpace, Height = HighlightSpace },
+                        },
+                    },
+                },
+                Visibility = Visibility.Collapsed,
+            };
+            Pages.Children.Add(frame);
+        }
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(frame, Loc.Format("viewer.page", i + 1));
-        Pages.Children.Add(frame);
-        return _frames[i] = frame;
+        _frames[i] = frame;
+        DrawHighlights(i);
+        return frame;
+    }
+
+    private static Image FrameImage(Border frame) => (Image)((Grid)frame.Child).Children[0];
+
+    private static Canvas FrameHighlights(Border frame) => (Canvas)((Viewbox)((Grid)frame.Child).Children[1]).Child;
+
+    private double PageLeft(int page) => Math.Max(PagePadding, (Pages.Width - _sizes[page].Width * _zoom) / 2);
+
+    private void ReleaseFrame(int i)
+    {
+        if (_frames[i] is not { } frame) return;
+        _frames[i] = null;
+        _generation[i]++; // drops a render still in flight for this page
+        _renderedWidth[i] = 0;
+        _rendered.Remove(i);
+        FrameImage(frame).Source = null;
+        FrameHighlights(frame).Children.Clear();
+        frame.Visibility = Visibility.Collapsed;
+        _framePool.Push(frame);
     }
 
     private void LayoutPages()
@@ -252,13 +304,14 @@ public sealed partial class ViewerPage : Page
             y += _sizes[i].Height * _zoom + PageGap;
         }
 
-        var total = y - PageGap + PagePadding;
-        _scale = total > MaxExtent ? MaxExtent / total : 1;
-        Pages.Height = total * _scale;
+        _total = y - PageGap + PagePadding;
+        Pages.Height = Math.Min(_total, ScrollWindow.Extent);
         ApplyCanvasWidth();
 
-        for (var i = _shownFrom; i <= _shownTo; i++) _frames[i]!.Visibility = Visibility.Collapsed;
-        _shownTo = -1;
+        // The built-in scroll bar only knows the window, so long documents get one that spans the whole document.
+        var windowed = _total > ScrollWindow.Extent;
+        Scroller.VerticalScrollBarVisibility = windowed ? ScrollBarVisibility.Hidden : ScrollBarVisibility.Auto;
+        DocumentBar.Visibility = windowed ? Visibility.Visible : Visibility.Collapsed;
         ZoomButton.Content = $"{_zoom * 100:0}%";
     }
 
@@ -269,16 +322,15 @@ public sealed partial class ViewerPage : Page
     private void PositionPages(int from, int to)
     {
         for (var i = _shownFrom; i <= _shownTo; i++)
-            if (i < from || i > to) _frames[i]!.Visibility = Visibility.Collapsed;
+            if (i < from || i > to) ReleaseFrame(i);
 
-        var shift = Scroller.VerticalOffset - RealOffset; // canvas offset that cancels scroll compression
         for (var i = from; i <= to; i++)
         {
             var frame = GetFrame(i);
             frame.Width = _sizes[i].Width * _zoom;
             frame.Height = _sizes[i].Height * _zoom;
-            Canvas.SetTop(frame, _tops[i] + shift);
-            Canvas.SetLeft(frame, Math.Max(PagePadding, (Pages.Width - frame.Width) / 2));
+            Canvas.SetTop(frame, _tops[i] - _windowStart);
+            Canvas.SetLeft(frame, PageLeft(i));
             frame.Visibility = Visibility.Visible;
         }
         _shownFrom = from;
@@ -305,8 +357,7 @@ public sealed partial class ViewerPage : Page
         _zoom = zoom;
         LayoutPages();
         Pages.UpdateLayout();
-        Scroller.ChangeView(null, (_tops[page] + fraction * _sizes[page].Height * _zoom) * _scale, null, true);
-        UpdateVisible();
+        ScrollToOffset(_tops[page] + fraction * _sizes[page].Height * _zoom);
     }
 
     private void StepZoom(double factor)
@@ -328,7 +379,39 @@ public sealed partial class ViewerPage : Page
         if (_doc is null) return;
         page = Math.Clamp(page, 0, _tops.Length - 1);
         Pages.UpdateLayout();
-        Scroller.ChangeView(null, Math.Max(0, _tops[page] - PageGap) * _scale, null, true);
+        ScrollToOffset(_tops[page] - PageGap);
+    }
+
+    /// <summary>Scrolls to a document offset, sliding the scrollable window first when it needs to move.</summary>
+    private void ScrollToOffset(double offset)
+    {
+        offset = Math.Clamp(offset, 0, Math.Max(0, _total - Scroller.ViewportHeight));
+        var start = ScrollWindow.Place(_windowStart, offset, _total);
+        var slid = start != _windowStart;
+        _windowStart = start;
+
+        // ChangeView lands on a later tick; until then VerticalOffset is stale, so remember where we are going.
+        _pendingOffset = offset;
+        _pendingSince = Environment.TickCount64;
+        Scroller.ChangeView(null, offset - start, null, true);
+        if (HasArrived(offset)) _pendingOffset = null;
+
+        // After a slide the pages must move in the same tick as the view (OnViewChanged), or a blank frame shows.
+        if (!slid || _pendingOffset is null) UpdateVisible();
+    }
+
+    private bool HasArrived(double offset) => Math.Abs(Scroller.VerticalOffset - (offset - _windowStart)) < 1;
+
+    private void SyncDocumentBar(double top)
+    {
+        if (DocumentBar.Visibility != Visibility.Visible) return;
+        var viewport = Scroller.ViewportHeight;
+        _updatingBar = true;
+        DocumentBar.ViewportSize = viewport;
+        DocumentBar.LargeChange = viewport * 0.9;
+        DocumentBar.Maximum = Math.Max(0, _total - viewport);
+        DocumentBar.Value = top;
+        _updatingBar = false;
     }
 
     // ---------------------------------------------------------------- rendering
@@ -359,11 +442,12 @@ public sealed partial class ViewerPage : Page
             _generation[i]++;
             _renderedWidth[i] = 0;
             _rendered.Remove(i);
-            ((Image)_frames[i]!.Child).Source = null;
+            FrameImage(_frames[i]!).Source = null;
         }
 
         var current = PageAt(top + Scroller.ViewportHeight / 3);
         if (current != _currentPage) SetCurrentPage(current);
+        SyncDocumentBar(top);
     }
 
     private int TargetPixelWidth(int page)
@@ -410,7 +494,7 @@ public sealed partial class ViewerPage : Page
             await bitmap.SetSourceAsync(stream);
             if (generation != _generation[index] || doc != _doc) return;
 
-            ((Image)GetFrame(index).Child).Source = bitmap;
+            FrameImage(GetFrame(index)).Source = bitmap;
         }
         catch (Exception ex)
         {
@@ -443,7 +527,26 @@ public sealed partial class ViewerPage : Page
 
     // ---------------------------------------------------------------- events
 
-    private void OnViewChanged(object? sender, ScrollViewerViewChangedEventArgs e) => UpdateVisible();
+    private void OnViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_pendingOffset is { } pending)
+        {
+            // The time limit covers a target the scroller clamped and so will never reach.
+            if (!HasArrived(pending) && Environment.TickCount64 - _pendingSince < PendingTimeoutMs) return;
+            _pendingOffset = null;
+        }
+
+        // Slide only once scrolling settles: moving the view would cut off a running pan or wheel animation.
+        if (!e.IsIntermediate && _doc is not null && ScrollWindow.Place(_windowStart, RealOffset, _total) != _windowStart)
+            ScrollToOffset(RealOffset);
+        else
+            UpdateVisible();
+    }
+
+    private void OnDocumentBarChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (!_updatingBar && _doc is not null) ScrollToOffset(e.NewValue);
+    }
 
     private void OnScrollerSizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -497,7 +600,7 @@ public sealed partial class ViewerPage : Page
         e.Handled = true;
     }
 
-    private void ScrollBy(double delta) => Scroller.ChangeView(null, Scroller.VerticalOffset + delta * _scale, null, true);
+    private void ScrollBy(double delta) => ScrollToOffset(RealOffset + delta);
 
     private void OnLanguageChanged(object? sender, EventArgs e)
     {

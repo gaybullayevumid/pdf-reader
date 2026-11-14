@@ -9,7 +9,12 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid AllowDrop="True" DragOver="OnDragOver" Drop="OnDrop">
+    <!--  Window-wide shortcuts live on the root, so their tooltip must stay hidden or it pops up anywhere over the window.  -->
+    <Grid
+        AllowDrop="True"
+        DragOver="OnDragOver"
+        Drop="OnDrop"
+        KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="F11" Invoked="OnToggleFullScreen" />
             <KeyboardAccelerator Key="Escape" Invoked="OnEscape" />

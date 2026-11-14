@@ -50,6 +50,8 @@
   "viewer.error.invalid": "Could not open this PDF. The file may be damaged or is not a valid PDF.",
   "viewer.open": "Open PDF (Ctrl+O)",
   "viewer.fullscreen": "Full screen (F11)",
+  "viewer.copy": "Copy",
+  "viewer.selectAll": "Select all",
 
   "pw.title": "Password required",
   "pw.retryTitle": "Incorrect password",

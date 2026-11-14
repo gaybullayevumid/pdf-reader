@@ -50,6 +50,8 @@
   "viewer.error.invalid": "PDF faylni ochib bo‘lmadi. Fayl buzilgan yoki PDF formatida emas.",
   "viewer.open": "PDF ochish (Ctrl+O)",
   "viewer.fullscreen": "To‘liq ekran (F11)",
+  "viewer.copy": "Nusxa olish",
+  "viewer.selectAll": "Hammasini belgilash",
 
   "pw.title": "Parol talab qilinadi",
   "pw.retryTitle": "Parol noto‘g‘ri",

@@ -50,6 +50,8 @@
   "viewer.error.invalid": "Не удалось открыть PDF. Файл повреждён или не является PDF-документом.",
   "viewer.open": "Открыть PDF (Ctrl+O)",
   "viewer.fullscreen": "Полный экран (F11)",
+  "viewer.copy": "Копировать",
+  "viewer.selectAll": "Выделить всё",
 
   "pw.title": "Требуется пароль",
   "pw.retryTitle": "Неверный пароль",
