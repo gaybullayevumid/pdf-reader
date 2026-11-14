@@ -63,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<IWindowStateService, WindowStateService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IDocumentTabService, DocumentTabService>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IWindowProvider, WindowProvider>();
         services.AddSingleton<IFileService, FileService>();

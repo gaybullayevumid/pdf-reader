@@ -3,6 +3,23 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-11-14
+
+### Added
+- **Tabs**: every opened PDF gets a tab under the title bar (file name, PDF icon, close button; `+` opens more).
+  Opening a file that is already open switches to its tab. Switching is instant and each tab keeps its page,
+  zoom and scroll position. The sidebar pages (Home, Recent, All PDFs, Favorites, Bookmarks, Settings) never
+  close tabs: clicking a tab brings its document back. Closing the active tab shows its neighbour, like a browser.
+  Tabs scroll when there are many and can be reordered by dragging. Shortcuts: `Ctrl+W` / `Ctrl+F4` close,
+  `Ctrl+Tab` / `Ctrl+Shift+Tab` switch.
+- **Session restore**: open tabs, the tab in front and each tab's reading position are saved
+  (`session.json` next to the database) and come back on the next start. Only the tab in front loads right away;
+  the others load when first shown. Files that no longer exist are skipped.
+
+### Changed
+- Opening several files at once opens all of them (previously only the first). Hidden tabs free their page
+  bitmaps; at most 5 documents stay loaded, older ones reopen at their saved position when shown again.
+
 ## [1.3.0] - 2026-11-14
 
 ### Added

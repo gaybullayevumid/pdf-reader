@@ -99,8 +99,6 @@ public sealed partial class ViewerPage
         return (page, (x - PageLeft(page)) / (_sizes[page].Width * _zoom), (docY - _tops[page]) / PageHeight(page));
     }
 
-    private double PageHeight(int page) => _sizes[page].Height * _zoom;
-
     /// <summary>The caret under a point; loads the page's text when it is not cached yet.</summary>
     private async Task<TextPosition?> CaretAtAsync(Point scrollerPoint)
     {

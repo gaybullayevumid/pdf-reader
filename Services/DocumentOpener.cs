@@ -4,7 +4,7 @@ namespace PdfReader.Services;
 
 /// <summary>
 /// Single entry point for "open these PDFs" from the picker, drag and drop, and file lists.
-/// Records the files in the library and opens the first one in the viewer.
+/// Records the files in the library and opens each one in a tab.
 /// </summary>
 public interface IDocumentOpener
 {
@@ -19,6 +19,7 @@ public sealed class DocumentOpener(
     IFileService files,
     IRecentFilesService recent,
     INavigationService navigation,
+    IDocumentTabService tabs,
     ILocalizationService loc,
     ILogger<DocumentOpener> logger) : IDocumentOpener
 {
@@ -48,13 +49,13 @@ public sealed class DocumentOpener(
             return;
         }
 
-        var added = 0;
+        var opened = new List<string>();
         foreach (var path in pdfs)
         {
             try
             {
                 await recent.RegisterOpenedAsync(path);
-                added++;
+                opened.Add(path);
             }
             catch (Exception ex)
             {
@@ -63,8 +64,12 @@ public sealed class DocumentOpener(
             }
         }
 
-        if (added == 0) return;
+        if (opened.Count == 0) return;
         LibraryChanged?.Invoke(this, EventArgs.Empty);
-        navigation.OpenDocument(pdfs[0]);
+
+        // Every file gets a tab (or keeps its existing one). The first is shown; the rest open behind it, in
+        // order, and load only when their tab is first shown.
+        navigation.OpenDocument(opened[0]);
+        for (var i = opened.Count - 1; i >= 1; i--) tabs.Open(opened[i], activate: false);
     }
 }

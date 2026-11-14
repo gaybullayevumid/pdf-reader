@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
 using PdfReader.Core;
 using PdfReader.Localization;
 using PdfReader.Services;
@@ -20,6 +19,7 @@ namespace PdfReader.Views;
 /// <summary>
 /// Continuous-scroll PDF viewer built on Windows.Data.Pdf. Every page has a correctly sized placeholder
 /// so scrolling and page jumps are exact; bitmaps are rendered only for pages near the viewport.
+/// One instance per open tab, hosted by MainWindow; <see cref="DocumentTabService"/> drives its lifecycle.
 /// </summary>
 public sealed partial class ViewerPage : Page
 {
@@ -63,6 +63,9 @@ public sealed partial class ViewerPage : Page
     private bool _updatingBox;
     private bool _updatingBar;
     private string? _errorKey;
+    private bool _suspended; // the tab is hidden
+    private bool _closed; // the tab was closed; nothing may touch the document again
+    private ViewState? _resumeState; // position to restore when the tab is shown again
 
     /// <summary>Scroll position expressed in document DIPs.</summary>
     private double RealOffset => _pendingOffset ?? _windowStart + Scroller.VerticalOffset;
@@ -102,26 +105,109 @@ public sealed partial class ViewerPage : Page
         KeyboardAccelerators.Add(accelerator);
     }
 
-    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    // ---------------------------------------------------------------- lifecycle (driven by the tab service)
+
+    /// <summary>The reading position or zoom changed; raised at most about once a second.</summary>
+    public event EventHandler? StateChanged;
+
+    /// <summary>The document cannot be shown (e.g. the password prompt was cancelled), so its tab should close.</summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>Starts loading a document, at <paramref name="view"/> or else where it was last read.</summary>
+    public void Open(string path, ViewState? view)
     {
-        _path = e.Parameter as string ?? string.Empty;
+        _path = path;
         TitleText.Text = System.IO.Path.GetFileName(_path);
         Loc.Service.LanguageChanged += OnLanguageChanged;
-        await LoadAsync();
+        _ = LoadAsync(view);
     }
 
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    /// <summary>The tab was hidden: remember the position and free the page bitmaps, but keep the document open.</summary>
+    public void Suspend()
     {
-        Loc.Service.LanguageChanged -= OnLanguageChanged;
+        if (_suspended || _closed) return;
+        _resumeState = CaptureState();
+        _suspended = true;
         _saveTimer.Stop();
         SaveProgress();
+        EndDrag();
+        ReleaseAllFrames();
+    }
+
+    /// <summary>The tab is shown again: restore the position once the viewer is back in the window.</summary>
+    public void Resume()
+    {
+        if (!_suspended || _closed) return;
+        _suspended = false;
+        var state = _resumeState;
+        _resumeState = null;
+        RunWhenLoaded(() =>
+        {
+            if (state is not null) ApplyView(state);
+            Scroller.Focus(FocusState.Programmatic); // so the keyboard scrolls the document right away
+        });
+    }
+
+    /// <summary>The tab was closed: save the position and release everything the document holds.</summary>
+    public void Close()
+    {
+        if (_closed) return;
+        _saveTimer.Stop();
+        SaveProgress();
+        _closed = true;
+        Loc.Service.LanguageChanged -= OnLanguageChanged;
+        ReleaseAllFrames();
+        Pages.Children.Clear();
+        _framePool.Clear();
         _doc = null;
         CloseTextLayer();
     }
 
+    /// <summary>The current position and zoom; null until the document is loaded.</summary>
+    public ViewState? CaptureState()
+    {
+        if (_doc is null || _tops.Length == 0) return null;
+        if (_suspended) return _resumeState;
+        var top = RealOffset;
+        var page = PageAt(top);
+        var fraction = Math.Max(0, (top - _tops[page]) / Math.Max(1, PageHeight(page)));
+        return new ViewState(page, fraction, _zoom, _fitWidth, Scroller.HorizontalOffset);
+    }
+
+    private void ApplyView(ViewState view)
+    {
+        if (_doc is null || _suspended || _closed) return;
+        var page = Math.Clamp(view.Page, 0, _tops.Length - 1);
+        _fitWidth = view.FitWidth;
+        _zoom = Math.Clamp(view.FitWidth ? ViewportWidth / _maxPageWidth : view.Zoom, MinZoom, MaxZoom);
+        LayoutPages();
+        Pages.UpdateLayout();
+
+        // At the very top of a page, keep the gap above it in view, as page jumps do.
+        var offset = view.PageFraction > 0 ? _tops[page] + view.PageFraction * PageHeight(page) : _tops[page] - PageGap;
+        ScrollToOffset(offset, view.HorizontalOffset);
+        SetCurrentPage(PageAt(RealOffset + Scroller.ViewportHeight / 3));
+    }
+
+    /// <summary>Runs an action after the viewer is in the window and has been laid out.</summary>
+    private void RunWhenLoaded(Action action)
+    {
+        void Run() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => action());
+        if (IsLoaded) { Run(); return; }
+        void OnLoaded(object s, RoutedEventArgs e) { Loaded -= OnLoaded; Run(); }
+        Loaded += OnLoaded;
+    }
+
+    private void ReleaseAllFrames()
+    {
+        for (var i = _shownFrom; i <= _shownTo; i++) ReleaseFrame(i);
+        _shownFrom = 0;
+        _shownTo = -1;
+    }
+
     // ---------------------------------------------------------------- loading
 
-    private async Task LoadAsync()
+    private async Task LoadAsync(ViewState? view)
     {
         BusyRing.IsActive = true;
         try
@@ -129,9 +215,10 @@ public sealed partial class ViewerPage : Page
             await WaitUntilLoadedAsync();
             var file = await StorageFile.GetFileFromPathAsync(_path);
             var (doc, password) = await LoadDocumentAsync(file);
+            if (_closed) return;
             if (doc is null)
             {
-                App.Services.GetRequiredService<INavigationService>().GoBack();
+                CloseRequested?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
@@ -148,6 +235,7 @@ public sealed partial class ViewerPage : Page
                 }
                 return result;
             });
+            if (_closed) return;
 
             _doc = doc;
             OpenTextLayer(password);
@@ -163,15 +251,25 @@ public sealed partial class ViewerPage : Page
             PageCountText.Text = $"/ {count}";
 
             var info = await _recent.GetAsync(_path);
-            var startPage = Math.Clamp(info?.LastPage ?? 0, 0, count - 1);
+            if (_closed) return;
+            var start = view ?? new ViewState(Page: Math.Clamp(info?.LastPage ?? 0, 0, count - 1));
 
-            ApplyFitWidth();
-            ScrollToPage(startPage);
-            SetCurrentPage(startPage);
-            UpdateVisible();
-            Scroller.Focus(FocusState.Programmatic);
+            if (_suspended)
+            {
+                _resumeState = start; // the tab was hidden while loading; Resume applies it
+            }
+            else
+            {
+                ApplyView(start);
+                UpdateVisible();
+                Scroller.Focus(FocusState.Programmatic);
+            }
 
-            await _recent.UpdateProgressAsync(_path, startPage, count);
+            await _recent.UpdateProgressAsync(_path, Math.Clamp(start.Page, 0, count - 1), count);
+        }
+        catch (Exception ex) when (_closed)
+        {
+            _logger.LogDebug(ex, "Load of {Path} ended after its tab closed", _path);
         }
         catch (Exception ex)
         {
@@ -358,7 +456,10 @@ public sealed partial class ViewerPage : Page
         LayoutPages();
         Pages.UpdateLayout();
         ScrollToOffset(_tops[page] + fraction * _sizes[page].Height * _zoom);
+        RestartSaveTimer();
     }
+
+    private double PageHeight(int page) => _sizes[page].Height * _zoom;
 
     private void StepZoom(double factor)
     {
@@ -383,7 +484,7 @@ public sealed partial class ViewerPage : Page
     }
 
     /// <summary>Scrolls to a document offset, sliding the scrollable window first when it needs to move.</summary>
-    private void ScrollToOffset(double offset)
+    private void ScrollToOffset(double offset, double? horizontal = null)
     {
         offset = Math.Clamp(offset, 0, Math.Max(0, _total - Scroller.ViewportHeight));
         var start = ScrollWindow.Place(_windowStart, offset, _total);
@@ -393,7 +494,7 @@ public sealed partial class ViewerPage : Page
         // ChangeView lands on a later tick; until then VerticalOffset is stale, so remember where we are going.
         _pendingOffset = offset;
         _pendingSince = Environment.TickCount64;
-        Scroller.ChangeView(null, offset - start, null, true);
+        Scroller.ChangeView(horizontal, offset - start, null, true);
         if (HasArrived(offset)) _pendingOffset = null;
 
         // After a slide the pages must move in the same tick as the view (OnViewChanged), or a blank frame shows.
@@ -418,7 +519,7 @@ public sealed partial class ViewerPage : Page
 
     private void UpdateVisible()
     {
-        if (_doc is null) return;
+        if (_doc is null || _suspended) return;
 
         var top = RealOffset;
         var first = PageAt(top);
@@ -515,20 +616,29 @@ public sealed partial class ViewerPage : Page
         _updatingBox = true;
         PageBox.Value = page + 1;
         _updatingBox = false;
+        RestartSaveTimer();
+    }
+
+    private void RestartSaveTimer()
+    {
+        if (_closed) return;
         _saveTimer.Stop();
         _saveTimer.Start();
     }
 
+    /// <summary>Records the page in the library and lets the tab session save the full position.</summary>
     private void SaveProgress()
     {
-        if (_doc is null) return;
+        if (_doc is null || _closed) return;
         _ = _recent.UpdateProgressAsync(_path, _currentPage, (int)_doc.PageCount);
+        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     // ---------------------------------------------------------------- events
 
     private void OnViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
+        if (_suspended) return;
         if (_pendingOffset is { } pending)
         {
             // The time limit covers a target the scroller clamped and so will never reach.
@@ -550,7 +660,7 @@ public sealed partial class ViewerPage : Page
 
     private void OnScrollerSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (_doc is null) return;
+        if (_doc is null || _suspended) return;
         ApplyCanvasWidth();
         if (_fitWidth) SetZoom(ViewportWidth / _maxPageWidth);
         else UpdateVisible();
