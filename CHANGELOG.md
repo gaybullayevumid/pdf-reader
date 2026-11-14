@@ -3,7 +3,7 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.5.0] - 2026-11-14
 
 ### Changed
 - **Top navigation instead of the sidebar.** Home, Recent files, All PDFs, Favorites and Bookmarks now sit in a
