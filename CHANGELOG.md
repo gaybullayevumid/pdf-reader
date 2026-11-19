@@ -3,6 +3,14 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-11-19
+
+### Added
+- **Clickable links.** Web and e-mail links in a PDF open in the default browser or mail app, and links inside the
+  document (such as a table of contents) jump to their page and position. The pointer turns into a hand over a
+  link and a tooltip shows where a web link goes. Dragging from a link still selects text; on touch screens a tap
+  follows the link. Other kinds of links (`file:`, `javascript:` and the like) are ignored for safety.
+
 ## [1.5.1] - 2026-11-14
 
 ### Fixed
