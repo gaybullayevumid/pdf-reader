@@ -103,6 +103,25 @@ public class PageTextTests
     }
 
     [Fact]
+    public void Link_at_finds_the_topmost_link_under_a_point()
+    {
+        var under = new PageLink(new TextRect(0.1, 0.1, 0.5, 0.2), "https://a.example", null, null);
+        var over = new PageLink(new TextRect(0.3, 0.1, 0.4, 0.2), null, 3, null);
+        var text = PageText.Build(Line(0.1, 0.1, "hello"), [under, over]);
+
+        Assert.Same(under, text.LinkAt(0.15, 0.15));
+        Assert.Same(over, text.LinkAt(0.35, 0.15));
+        Assert.Null(text.LinkAt(0.7, 0.15));
+    }
+
+    [Fact]
+    public void Links_survive_a_page_without_text()
+    {
+        var link = new PageLink(new TextRect(0, 0, 1, 1), "https://a.example", null, null);
+        Assert.Same(link, PageText.Build([], [link]).LinkAt(0.5, 0.5));
+    }
+
+    [Fact]
     public void Positions_order_by_page_then_caret()
     {
         Assert.True(new TextPosition(1, 0) > new TextPosition(0, 99));

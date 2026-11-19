@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using PdfReader.Core;
 using UglyToad.PdfPig;
+using UglyToad.PdfPig.Actions;
+using UglyToad.PdfPig.Annotations;
 using UglyToad.PdfPig.Content;
 
 namespace PdfReader.Services;
@@ -66,7 +68,7 @@ public sealed class DocumentText : IDisposable
         {
             _doc ??= PdfDocument.Open(_path, new ParsingOptions { Password = _password ?? string.Empty });
             var page = _doc.GetPage(index + 1);
-            return PageText.Build(ToGlyphs(page));
+            return PageText.Build(ToGlyphs(page), ToLinks(page, index));
         }
         catch (Exception ex) when (_doc is null)
         {
@@ -114,6 +116,62 @@ public sealed class DocumentText : IDisposable
                 1 - (bottom - originY) / height));
         }
     }
+
+    /// <summary>
+    /// The page's link annotations in the same page fractions as glyphs. Only web and mail addresses and jumps within
+    /// the document are kept; a page whose annotations cannot be read just has no links.
+    /// </summary>
+    private List<PageLink> ToLinks(Page page, int index)
+    {
+        var links = new List<PageLink>();
+        var width = page.Width;
+        var height = page.Height;
+        if (width <= 0 || height <= 0) return links;
+        var originX = page.Rotation.Value == 0 ? page.CropBox.Bounds.Left : 0;
+        var originY = page.Rotation.Value == 0 ? page.CropBox.Bounds.Bottom : 0;
+
+        try
+        {
+            foreach (var annotation in page.GetAnnotations())
+            {
+                if (annotation.Type != AnnotationType.Link) continue;
+
+                string? uri = null;
+                int? target = null;
+                double? top = null;
+                switch (annotation.Action)
+                {
+                    case UriAction { Uri: { } address } when IsOpenable(address):
+                        uri = address.Trim();
+                        break;
+                    case GoToAction { Destination: { PageNumber: > 0 } destination }:
+                        target = destination.PageNumber - 1;
+                        top = destination.Coordinates?.Top;
+                        break;
+                    default:
+                        continue;
+                }
+
+                var r = annotation.Rectangle;
+                var box = new TextRect(
+                    (Math.Min(r.Left, r.Right) - originX) / width,
+                    1 - (Math.Max(r.Top, r.Bottom) - originY) / height,
+                    (Math.Max(r.Left, r.Right) - originX) / width,
+                    1 - (Math.Min(r.Top, r.Bottom) - originY) / height);
+                links.Add(new PageLink(box, uri, target, top));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to read the links of page {Page}", index + 1);
+        }
+        return links;
+    }
+
+    /// <summary>Only addresses a browser or mail client handles; file:, javascript: and the like are ignored.</summary>
+    private static bool IsOpenable(string address) =>
+        System.Uri.TryCreate(address.Trim(), UriKind.Absolute, out var uri)
+        && uri.Scheme is "http" or "https" or "mailto";
 
     public void Dispose()
     {

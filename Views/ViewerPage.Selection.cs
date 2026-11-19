@@ -33,6 +33,9 @@ public sealed partial class ViewerPage
     private Point _dragPoint; // pointer position relative to the scroller while dragging
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _autoScroll;
     private Brush? _highlightBrush;
+    private PageLink? _pressedLink; // the link under a mouse press; followed on release unless text was dragged
+    private Point _pressPoint;
+    private string? _hoverUri;
 
     private bool HasSelection => _hasSelection && _anchor != _focus;
     private TextPosition SelectionStart => _anchor < _focus ? _anchor : _focus;
@@ -47,6 +50,7 @@ public sealed partial class ViewerPage
         Pages.PointerExited += (_, _) => { if (!_selecting) ProtectedCursor = null; };
         Pages.DoubleTapped += OnPagesDoubleTapped;
         Pages.RightTapped += OnPagesRightTapped;
+        Pages.Tapped += OnPagesTapped;
 
         AddTextAccelerator(VirtualKey.C, () => _ = CopySelectionAsync());
         AddTextAccelerator(VirtualKey.A, SelectAll);
@@ -127,6 +131,8 @@ public sealed partial class ViewerPage
         var extend = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) && _hasSelection;
         _selecting = true;
         _dragPoint = point.Position;
+        _pressPoint = point.Position;
+        _pressedLink = extend ? null : LinkAt(point.Position);
 
         if (await CaretAtAsync(point.Position) is not { } caret) return;
         if (!extend) _anchor = caret;
@@ -159,6 +165,63 @@ public sealed partial class ViewerPage
         if (!_selecting) return;
         Pages.ReleasePointerCapture(e.Pointer);
         EndDrag();
+
+        // A click (not a drag) on a link follows it.
+        if (_pressedLink is not { } link) return;
+        _pressedLink = null;
+        var at = e.GetCurrentPoint(Scroller).Position;
+        if (Math.Abs(at.X - _pressPoint.X) > 4 || Math.Abs(at.Y - _pressPoint.Y) > 4) return;
+        _hasSelection = false;
+        RedrawSelection();
+        FollowLink(link);
+    }
+
+    /// <summary>Touch keeps panning, so a tap is how a finger follows a link.</summary>
+    private void OnPagesTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (e.PointerDeviceType != PointerDeviceType.Touch || LinkAt(e.GetPosition(Scroller)) is not { } link) return;
+        FollowLink(link);
+        e.Handled = true;
+    }
+
+    /// <summary>The link under a point, when the page's text layer is already loaded.</summary>
+    private PageLink? LinkAt(Point scrollerPoint)
+    {
+        if (_text is null || _tops.Length == 0) return null;
+        var (page, x, y) = HitPage(scrollerPoint);
+        return _text.TryGet(page)?.LinkAt(x, y);
+    }
+
+    private void FollowLink(PageLink link)
+    {
+        if (link.Uri is { } address)
+        {
+            _ = OpenUriAsync(address);
+            return;
+        }
+        if (link.TargetPage is not { } page || page < 0 || page >= _tops.Length) return;
+
+        // The destination's top is in PDF points from the bottom of the page; page sizes are in DIPs (96 per inch).
+        var offset = _tops[page] - PageGap;
+        if (link.TargetTop is { } top && _sizes[page].Height > 0)
+        {
+            var fraction = Math.Clamp(1 - top * 96 / 72 / _sizes[page].Height, 0, 1);
+            offset = _tops[page] + fraction * PageHeight(page) - PageGap;
+        }
+        Pages.UpdateLayout();
+        ScrollToOffset(offset);
+    }
+
+    private async Task OpenUriAsync(string address)
+    {
+        try
+        {
+            await Launcher.LaunchUriAsync(new Uri(address));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to open the link {Uri}", address);
+        }
     }
 
     private void EndDrag()
@@ -191,8 +254,16 @@ public sealed partial class ViewerPage
             _ = _text.GetAsync(page); // warm the cache so a press right after has the text
             return;
         }
-        var overText = x is >= 0 and <= 1 && pageText.IsOverText(x, y);
-        ProtectedCursor = overText ? InputSystemCursor.Create(InputSystemCursorShape.IBeam) : null;
+        var onPage = x is >= 0 and <= 1;
+        var link = onPage ? pageText.LinkAt(x, y) : null;
+        ProtectedCursor = link is not null ? InputSystemCursor.Create(InputSystemCursorShape.Hand)
+            : onPage && pageText.IsOverText(x, y) ? InputSystemCursor.Create(InputSystemCursorShape.IBeam)
+            : null;
+        if (link?.Uri != _hoverUri)
+        {
+            _hoverUri = link?.Uri;
+            ToolTipService.SetToolTip(Pages, _hoverUri); // shows where a web link goes before it is clicked
+        }
     }
 
     private async void OnPagesDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)

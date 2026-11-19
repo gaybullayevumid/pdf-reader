@@ -11,6 +11,12 @@ public readonly record struct TextRect(double Left, double Top, double Right, do
 /// <summary>One character (or ligature) as drawn on the page.</summary>
 public readonly record struct Glyph(string Text, TextRect Box);
 
+/// <summary>
+/// A clickable area of a page: either a web/mail address (<see cref="Uri"/>) or a page of this document
+/// (<see cref="TargetPage"/>, zero-based, with <see cref="TargetTop"/> the destination's top in PDF points when known).
+/// </summary>
+public sealed record PageLink(TextRect Box, string? Uri, int? TargetPage, double? TargetTop);
+
 /// <summary>A point in the document's text: before glyph <see cref="Caret"/> of page <see cref="Page"/>.</summary>
 public readonly record struct TextPosition(int Page, int Caret) : IComparable<TextPosition>
 {
@@ -32,28 +38,31 @@ public sealed class PageText
     // A horizontal gap wider than this share of the line height reads as a word break.
     private const double SpaceGap = 0.15;
 
-    public static readonly PageText Empty = new([], [], []);
+    public static readonly PageText Empty = new([], [], [], []);
 
     private readonly Glyph[] _glyphs;
     private readonly string[] _separators; // text inserted before each glyph: "", " " or "\n"
     private readonly Line[] _lines;
+    private readonly PageLink[] _links;
 
     private readonly record struct Line(int Start, int End, TextRect Box); // glyphs [Start, End)
 
-    private PageText(Glyph[] glyphs, string[] separators, Line[] lines)
+    private PageText(Glyph[] glyphs, string[] separators, Line[] lines, PageLink[] links)
     {
         _glyphs = glyphs;
         _separators = separators;
         _lines = lines;
+        _links = links;
     }
 
     public int Count => _glyphs.Length;
 
     /// <summary>Builds the text layer from glyphs in the order the page draws them; empty glyphs are dropped.</summary>
-    public static PageText Build(IEnumerable<Glyph> drawn)
+    public static PageText Build(IEnumerable<Glyph> drawn, IEnumerable<PageLink>? links = null)
     {
         var glyphs = drawn.Where(g => !string.IsNullOrEmpty(g.Text)).ToArray();
-        if (glyphs.Length == 0) return Empty;
+        PageLink[] linkArray = links is null ? [] : [.. links];
+        if (glyphs.Length == 0) return linkArray.Length == 0 ? Empty : new PageText([], [], [], linkArray);
 
         var separators = new string[glyphs.Length];
         var lines = new List<Line>();
@@ -84,7 +93,15 @@ public sealed class PageText
             }
         }
         lines.Add(new Line(start, glyphs.Length, box));
-        return new PageText(glyphs, separators, [.. lines]);
+        return new PageText(glyphs, separators, [.. lines], linkArray);
+    }
+
+    /// <summary>The link under a point, or null. Later annotations are drawn on top, so they win.</summary>
+    public PageLink? LinkAt(double x, double y)
+    {
+        for (var i = _links.Length - 1; i >= 0; i--)
+            if (_links[i].Box.Contains(x, y)) return _links[i];
+        return null;
     }
 
     /// <summary>True when the point is on a line of text (used for the I-beam cursor).</summary>
