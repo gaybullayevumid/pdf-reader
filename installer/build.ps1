@@ -12,6 +12,9 @@ dotnet publish "$root\PdfReader.csproj" -c Release -r win-x64 -p:Platform=x64 -p
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
 $iscc = @(
+  "$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",
+  "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe",
+  "$env:ProgramFiles\Inno Setup 7\ISCC.exe",
   "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
   "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
