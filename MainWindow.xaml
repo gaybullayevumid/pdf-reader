@@ -65,8 +65,8 @@
             </TitleBar.IconSource>
             <AutoSuggestBox
                 x:Name="SearchBox"
-                MinWidth="180"
-                MaxWidth="480"
+                MinWidth="360"
+                MaxWidth="560"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
                 loc:Loc.AutomationName="search.name"

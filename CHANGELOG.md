@@ -3,6 +3,12 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.8.1] - 2026-11-27
+
+### Changed
+- **Wider library search.** The search box in the title bar is now at least 360 px wide (up to 560 px), so it no
+  longer looks cramped next to the rest of the window.
+
 ## [1.8.0] - 2026-11-27
 
 ### Added
