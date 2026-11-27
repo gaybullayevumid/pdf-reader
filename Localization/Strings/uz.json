@@ -37,6 +37,7 @@
   "doc.toggleFavorite": "Sevimlilarga qo‘shish yoki olib tashlash",
   "doc.remove": "Ro‘yxatdan olib tashlash",
   "doc.details": "{0} · Ochilgan: {1}",
+  "doc.progress": "{1} sahifadan {0}-sahifa · {2}%",
   "size.b": "{0} B",
   "size.kb": "{0} KB",
   "size.mb": "{0} MB",

@@ -22,6 +22,16 @@ public sealed partial class PdfDocumentInfo : ObservableObject
     public string Details => Loc.Format("doc.details", FormatSize(SizeBytes),
         LastOpened.LocalDateTime.ToString("g", Loc.Service.Culture));
 
+    /// <summary>False until the document has been opened in the viewer and its page count is known.</summary>
+    public bool HasProgress => PageCount > 0;
+
+    /// <summary>Share of the document read, counting the page the reader stopped at as read.</summary>
+    public int ProgressPercent => HasProgress ? (Math.Clamp(LastPage, 0, PageCount - 1) + 1) * 100 / PageCount : 0;
+
+    public string ProgressText => HasProgress
+        ? Loc.Format("doc.progress", Math.Clamp(LastPage, 0, PageCount - 1) + 1, PageCount, ProgressPercent)
+        : string.Empty;
+
     private static string FormatSize(long bytes) => bytes switch
     {
         < 1024 => Loc.Format("size.b", bytes),

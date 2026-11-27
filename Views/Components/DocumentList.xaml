@@ -51,6 +51,25 @@
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="{x:Bind Details}" />
+                        <Grid
+                            Margin="0,4,0,0"
+                            ColumnSpacing="10"
+                            Visibility="{x:Bind HasProgress}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MaxWidth="240" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ProgressBar
+                                VerticalAlignment="Center"
+                                Maximum="100"
+                                Value="{x:Bind ProgressPercent}"
+                                AutomationProperties.Name="{x:Bind ProgressText}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind ProgressText}" />
+                        </Grid>
                     </StackPanel>
                     <Button
                         Grid.Column="2"

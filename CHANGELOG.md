@@ -3,6 +3,13 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-11-27
+
+### Added
+- **Reading progress.** Every book on Home and in the library shows the page you stopped at, the page count and how
+  much of it you have read, with a progress bar (for example *Page 12 of 240 · 5%*). It appears once a book has been
+  opened in the viewer.
+
 ## [1.7.0] - 2026-11-27
 
 ### Added

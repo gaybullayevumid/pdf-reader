@@ -37,6 +37,7 @@
   "doc.toggleFavorite": "Toggle favorite",
   "doc.remove": "Remove from list",
   "doc.details": "{0} · Opened {1}",
+  "doc.progress": "Page {0} of {1} · {2}%",
   "size.b": "{0} B",
   "size.kb": "{0} KB",
   "size.mb": "{0} MB",
