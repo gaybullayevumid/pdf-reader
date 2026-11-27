@@ -3,6 +3,13 @@
 All notable changes to PDF Reader are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-11-27
+
+### Added
+- **Page list.** A sidebar on the left of the viewer shows a thumbnail of every page. It follows the page you are
+  reading, and clicking a thumbnail (or moving through the list with the arrow keys) jumps to that page. The button
+  next to Back shows or hides it, and the choice is remembered.
+
 ## [1.6.0] - 2026-11-19
 
 ### Added

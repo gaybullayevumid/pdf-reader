@@ -92,6 +92,7 @@ public sealed partial class ViewerPage : Page
         Scroller.PreviewKeyDown += OnKeyDown;
 
         InitializeSelection();
+        ApplyPageListSetting();
     }
 
     private void AddAccelerator(VirtualKey key, Action action)
@@ -139,6 +140,7 @@ public sealed partial class ViewerPage : Page
     {
         if (!_suspended || _closed) return;
         _suspended = false;
+        ApplyPageListSetting();
         var state = _resumeState;
         _resumeState = null;
         RunWhenLoaded(() =>
@@ -160,6 +162,7 @@ public sealed partial class ViewerPage : Page
         Pages.Children.Clear();
         _framePool.Clear();
         _doc = null;
+        ClearPageList();
         CloseTextLayer();
     }
 
@@ -245,6 +248,7 @@ public sealed partial class ViewerPage : Page
             _renderedWidth = new int[count];
             _generation = new int[count];
             _frames = new Border?[count];
+            FillPageList();
 
             PageBox.Maximum = count;
             PageBox.Width = Math.Max(64, 40 + 10 * count.ToString().Length);
@@ -616,6 +620,7 @@ public sealed partial class ViewerPage : Page
         _updatingBox = true;
         PageBox.Value = page + 1;
         _updatingBox = false;
+        SyncPageList();
         RestartSaveTimer();
     }
 

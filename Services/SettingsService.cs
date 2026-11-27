@@ -17,6 +17,9 @@ public interface ISettingsService
 
     /// <summary>Last saved window state; null when none has been saved yet.</summary>
     WindowStateData? Window { get; set; }
+
+    /// <summary>Whether the viewer shows the page list on the left.</summary>
+    bool ShowPageList { get; set; }
 }
 
 /// <summary>Settings persisted as JSON in %LocalAppData%\PdfReader (works packaged and unpackaged).</summary>
@@ -61,6 +64,12 @@ public sealed class SettingsService : ISettingsService
     {
         get => _data.Window;
         set => Update(d => d with { Window = value });
+    }
+
+    public bool ShowPageList
+    {
+        get => _data.ShowPageList;
+        set => Update(d => d with { ShowPageList = value });
     }
 
     private void Update(Func<AppSettings, AppSettings> change)

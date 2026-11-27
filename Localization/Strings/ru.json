@@ -48,6 +48,8 @@
   "viewer.fitWidth": "По ширине (Ctrl+0)",
   "viewer.fitPage": "По размеру страницы",
   "viewer.page": "Страница {0}",
+  "viewer.pageList": "Список страниц",
+  "viewer.pageList.tip": "Показать или скрыть список страниц",
   "viewer.error.access": "Не удалось открыть PDF. Файл перемещён, удалён или недоступен.",
   "viewer.error.invalid": "Не удалось открыть PDF. Файл повреждён или не является PDF-документом.",
   "viewer.copy": "Копировать",

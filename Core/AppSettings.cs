@@ -10,7 +10,8 @@ public sealed record AppSettings(
     bool AutoCheckUpdates = true,
     string? Language = null,
     bool RememberWindowState = true,
-    WindowStateData? Window = null);
+    WindowStateData? Window = null,
+    bool ShowPageList = true);
 
 /// <summary>Reads and writes <see cref="AppSettings"/>; a missing or damaged file never throws.</summary>
 public static class SettingsStore

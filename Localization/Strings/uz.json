@@ -48,6 +48,8 @@
   "viewer.fitWidth": "Kenglikka moslash (Ctrl+0)",
   "viewer.fitPage": "Sahifaga moslash",
   "viewer.page": "{0}-sahifa",
+  "viewer.pageList": "Sahifalar ro‘yxati",
+  "viewer.pageList.tip": "Sahifalar ro‘yxatini ko‘rsatish yoki yashirish",
   "viewer.error.access": "PDF faylni ochib bo‘lmadi. Fayl ko‘chirilgan, o‘chirilgan yoki unga kirish imkoni yo‘q.",
   "viewer.error.invalid": "PDF faylni ochib bo‘lmadi. Fayl buzilgan yoki PDF formatida emas.",
   "viewer.copy": "Nusxa olish",

@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:PdfReader.Localization"
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
+    xmlns:views="using:PdfReader.Views"
     KeyboardAcceleratorPlacementMode="Hidden">
 
     <Grid>
@@ -21,14 +22,25 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Button
-                Background="Transparent"
-                BorderThickness="0"
-                loc:Loc.AutomationName="viewer.back"
-                loc:Loc.ToolTip="viewer.back"
-                Click="OnBack">
-                <FontIcon FontSize="16" Glyph="&#xE72B;" />
-            </Button>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button
+                    Background="Transparent"
+                    BorderThickness="0"
+                    loc:Loc.AutomationName="viewer.back"
+                    loc:Loc.ToolTip="viewer.back"
+                    Click="OnBack">
+                    <FontIcon FontSize="16" Glyph="&#xE72B;" />
+                </Button>
+                <ToggleButton
+                    x:Name="PageListToggle"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    loc:Loc.AutomationName="viewer.pageList"
+                    loc:Loc.ToolTip="viewer.pageList.tip"
+                    Click="OnPageListToggle">
+                    <FontIcon FontSize="16" Glyph="&#xE8A0;" />
+                </ToggleButton>
+            </StackPanel>
 
             <TextBlock
                 x:Name="TitleText"
@@ -104,42 +116,88 @@
             IsClosable="False"
             Severity="Error" />
 
-        <ScrollViewer
-            x:Name="Scroller"
-            Grid.Row="2"
-            HorizontalScrollBarVisibility="Auto"
-            HorizontalScrollMode="Auto"
-            FocusVisualPrimaryThickness="0"
-            FocusVisualSecondaryThickness="0"
-            IsTabStop="True"
-            UseSystemFocusVisuals="False"
-            SizeChanged="OnScrollerSizeChanged"
-            VerticalScrollBarVisibility="Auto"
-            ViewChanged="OnViewChanged"
-            ZoomMode="Disabled">
-            <Canvas
-                x:Name="Pages"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Background="Transparent" />
-        </ScrollViewer>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <primitives:ScrollBar
-            x:Name="DocumentBar"
-            Grid.Row="2"
-            HorizontalAlignment="Right"
-            IndicatorMode="MouseIndicator"
-            Orientation="Vertical"
-            SmallChange="60"
-            ValueChanged="OnDocumentBarChanged"
-            Visibility="Collapsed" />
+            <!--  Page list: thumbnails are rendered only for the items the list has realized.  -->
+            <Border
+                x:Name="PageListPane"
+                Width="176"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0"
+                Visibility="Collapsed">
+                <ListView
+                    x:Name="PageList"
+                    Padding="0,4"
+                    loc:Loc.AutomationName="viewer.pageList"
+                    ContainerContentChanging="OnPageListContainerChanging"
+                    SelectionChanged="OnPageListSelectionChanged"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="views:PageThumbnail">
+                            <StackPanel
+                                Padding="0,8"
+                                HorizontalAlignment="Center"
+                                Spacing="4">
+                                <Border
+                                    Width="{x:Bind Width}"
+                                    Height="{x:Bind Height}"
+                                    Background="White"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1">
+                                    <Image Source="{x:Bind Image, Mode=OneWay}" Stretch="Fill" />
+                                </Border>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind Label}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
 
-        <ProgressRing
-            x:Name="BusyRing"
-            Grid.Row="2"
-            Width="48"
-            Height="48"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center" />
+            <ScrollViewer
+                x:Name="Scroller"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Auto"
+                HorizontalScrollMode="Auto"
+                FocusVisualPrimaryThickness="0"
+                FocusVisualSecondaryThickness="0"
+                IsTabStop="True"
+                UseSystemFocusVisuals="False"
+                SizeChanged="OnScrollerSizeChanged"
+                VerticalScrollBarVisibility="Auto"
+                ViewChanged="OnViewChanged"
+                ZoomMode="Disabled">
+                <Canvas
+                    x:Name="Pages"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Background="Transparent" />
+            </ScrollViewer>
+
+            <primitives:ScrollBar
+                x:Name="DocumentBar"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                IndicatorMode="MouseIndicator"
+                Orientation="Vertical"
+                SmallChange="60"
+                ValueChanged="OnDocumentBarChanged"
+                Visibility="Collapsed" />
+
+            <ProgressRing
+                x:Name="BusyRing"
+                Grid.Column="1"
+                Width="48"
+                Height="48"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center" />
+        </Grid>
     </Grid>
 </Page>

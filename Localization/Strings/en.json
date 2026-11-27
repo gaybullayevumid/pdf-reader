@@ -48,6 +48,8 @@
   "viewer.fitWidth": "Fit width (Ctrl+0)",
   "viewer.fitPage": "Fit page",
   "viewer.page": "Page {0}",
+  "viewer.pageList": "Page list",
+  "viewer.pageList.tip": "Show or hide the page list",
   "viewer.error.access": "Could not open this PDF. The file was moved, deleted, or cannot be accessed.",
   "viewer.error.invalid": "Could not open this PDF. The file may be damaged or is not a valid PDF.",
   "viewer.copy": "Copy",
